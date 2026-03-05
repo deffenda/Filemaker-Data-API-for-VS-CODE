@@ -6,3 +6,8 @@ dist
 *.vsix
 .DS_Store
 .fmweb
+.next
+.npm-cache
+.turbo
+build
+coverage

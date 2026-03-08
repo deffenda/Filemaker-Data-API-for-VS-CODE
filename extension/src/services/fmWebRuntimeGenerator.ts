@@ -1,9 +1,9 @@
 import { access, mkdir, readdir, readFile, writeFile } from 'fs/promises';
 import path from 'path';
 
-import * as vscode from 'vscode';
+import type * as vscode from 'vscode';
 
-import { migrateLayoutDefinition, type LayoutDefinition } from '../fmweb/layoutSchema';
+import { migrateLayoutDefinition } from '../fmweb/layoutSchema';
 import type { Logger } from './logger';
 import type { FmWebProjectService } from './fmWebProjectService';
 

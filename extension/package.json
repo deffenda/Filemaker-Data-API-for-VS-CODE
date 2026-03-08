@@ -68,7 +68,9 @@
     "onCommand:filemakerDataApiTools.openLayoutMode",
     "onCommand:filemakerDataApiTools.generateFmWebNextApp",
     "onCommand:filemakerDataApiTools.generateFmWebLayoutPage",
-    "onCommand:filemakerDataApiTools.startFmWebPreviewServer"
+    "onCommand:filemakerDataApiTools.startFmWebPreviewServer",
+    "onCommand:filemakerDataApiTools.exportProfiles",
+    "onCommand:filemakerDataApiTools.importProfiles"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -289,6 +291,14 @@
       {
         "command": "filemakerDataApiTools.startFmWebPreviewServer",
         "title": "FileMaker: Start Preview Server"
+      },
+      {
+        "command": "filemakerDataApiTools.exportProfiles",
+        "title": "FileMaker: Export Connection Profiles"
+      },
+      {
+        "command": "filemakerDataApiTools.importProfiles",
+        "title": "FileMaker: Import Connection Profiles"
       }
     ],
     "menus": {
@@ -533,6 +543,13 @@
           "default": "workspaceFiles",
           "description": "Storage backend for schema snapshots. In untrusted workspaces, workspaceState is used automatically."
         },
+        "filemaker.schema.snapshots.maxPerLayout": {
+          "type": "number",
+          "default": 20,
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Maximum number of schema snapshots to retain per layout. Oldest snapshots are pruned automatically."
+        },
         "filemaker.schema.diagnostics.enabled": {
           "type": "boolean",
           "default": false,
@@ -615,6 +632,11 @@
           "type": "string",
           "default": "sha256",
           "description": "Hash algorithm used for schema metadata fingerprinting."
+        },
+        "filemaker.telemetry.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable anonymous usage telemetry to help improve the extension. No personal data or FileMaker credentials are collected."
         }
       }
     }
@@ -634,8 +656,8 @@
     "package:check": "vsce package --allow-missing-repository --baseContentUrl https://example.com/your-org/filemaker-data-api-tools/blob/main --baseImagesUrl https://example.com/your-org/filemaker-data-api-tools/raw/main"
   },
   "dependencies": {
-    "axios": "^1.11.0",
-    "zod": "^3.24.2"
+    "axios": "1.11.0",
+    "zod": "3.24.2"
   },
   "devDependencies": {
     "@vscode/vsce": "^2.27.0",

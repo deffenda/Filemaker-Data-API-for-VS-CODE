@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.6.0
+
+- Developer experience improvements:
+  - Removed unused `allowUnsafeInlineStyles` CSP option
+  - Added `dev:extension` script for single-workspace watch mode
+  - Standardized error handling with `showCommandError` alias
+- Testing improvements:
+  - Added offline cache key consistency tests
+  - Added batch operation failure scenario tests
+- Performance and scalability:
+  - Added timeout tracking to diagnostics metrics
+  - Added snapshot retention with configurable `maxPerLayout` pruning
+- Security hardening:
+  - Pinned production dependency versions (axios, zod)
+  - Added `npm audit` step to CI pipeline
+  - Added per-session HMAC token to FM bridge server
+  - Added security model documentation for plugin system
+- Feature additions:
+  - Added `UndoRedoStack` class for Layout Mode canvas operations
+  - Added anonymous telemetry opt-in setting
+  - Added multi-profile batch operation types
+  - Added profile export/import commands
+- Distribution and ecosystem:
+  - Added VS Code Marketplace publishing workflow to CI
+  - Updated changelog
+
 ## 0.5.1
 
 - Fixed layout parsing for folder-based FileMaker layout payloads:

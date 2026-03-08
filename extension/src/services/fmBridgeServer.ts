@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'http';
 
 import type { FindRecordsRequest } from '../types/fm';
@@ -13,6 +14,7 @@ const DEFAULT_ROUTE_TIMEOUT_MS = 20_000;
 export class FmBridgeServer {
   private server: Server | undefined;
   private port: number | undefined;
+  private sessionToken: string | undefined;
 
   public constructor(
     private readonly profileStore: ProfileStore,
@@ -52,6 +54,7 @@ export class FmBridgeServer {
 
     this.server = server;
     this.port = address.port;
+    this.sessionToken = randomBytes(32).toString('hex');
     this.logger.info('FM bridge server started.', {
       port: this.port
     });
@@ -70,6 +73,7 @@ export class FmBridgeServer {
     const server = this.server;
     this.server = undefined;
     this.port = undefined;
+    this.sessionToken = undefined;
 
     await new Promise<void>((resolve) => {
       server.close(() => resolve());
@@ -82,6 +86,10 @@ export class FmBridgeServer {
 
   public isRunning(): boolean {
     return Boolean(this.server && this.port);
+  }
+
+  public getSessionToken(): string | undefined {
+    return this.sessionToken;
   }
 
   public getBaseUrl(): string {
@@ -111,6 +119,12 @@ export class FmBridgeServer {
       }
 
       this.setCorsHeaders(response, origin);
+
+      const bridgeToken = readHeader(request.headers['x-fm-bridge-token']);
+      if (request.method !== 'OPTIONS' && bridgeToken !== this.sessionToken) {
+        this.sendJson(response, 403, { error: 'Invalid or missing bridge session token.' });
+        return;
+      }
 
       if (request.method === 'OPTIONS') {
         response.statusCode = 204;
@@ -262,7 +276,7 @@ export class FmBridgeServer {
 
     response.setHeader('Access-Control-Allow-Origin', origin);
     response.setHeader('Vary', 'Origin');
-    response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    response.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-FM-Bridge-Token');
     response.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   }
 

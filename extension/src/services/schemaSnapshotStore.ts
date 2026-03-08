@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { mkdir, readdir, readFile, writeFile } from 'fs/promises';
+import { mkdir, readdir, readFile, unlink, writeFile } from 'fs/promises';
 import { join } from 'path';
 
 import type * as vscode from 'vscode';
@@ -34,6 +34,7 @@ interface SnapshotStoreOptions {
   getStorageMode?: () => SchemaSnapshotStorage;
   getWorkspaceRoot?: () => string | undefined;
   isWorkspaceTrusted?: () => boolean;
+  getMaxPerLayout?: () => number;
 }
 
 export class SchemaSnapshotStore {
@@ -41,6 +42,7 @@ export class SchemaSnapshotStore {
   private readonly getStorageModeFromConfig: () => SchemaSnapshotStorage;
   private readonly getWorkspaceRoot: () => string | undefined;
   private readonly isWorkspaceTrusted: () => boolean;
+  private readonly getMaxPerLayout: () => number;
 
   public constructor(
     private readonly workspaceState: vscode.Memento,
@@ -50,6 +52,7 @@ export class SchemaSnapshotStore {
     this.getStorageModeFromConfig = options?.getStorageMode ?? (() => 'workspaceState');
     this.getWorkspaceRoot = options?.getWorkspaceRoot ?? (() => undefined);
     this.isWorkspaceTrusted = options?.isWorkspaceTrusted ?? (() => true);
+    this.getMaxPerLayout = options?.getMaxPerLayout ?? (() => 20);
   }
 
   public async captureSnapshot(input: CaptureSnapshotInput): Promise<SchemaSnapshot> {
@@ -69,6 +72,8 @@ export class SchemaSnapshotStore {
     } else {
       await this.persistToWorkspaceState(snapshot);
     }
+
+    await this.pruneSnapshots(snapshot.profileId, snapshot.layout);
 
     return snapshot;
   }
@@ -102,6 +107,83 @@ export class SchemaSnapshotStore {
     }
 
     return this.getSnapshot(latest.id);
+  }
+
+  private async pruneSnapshots(profileId: string, layout: string): Promise<void> {
+    const maxPerLayout = this.getMaxPerLayout();
+    const mode = this.resolveStorageMode();
+
+    try {
+      if (mode === 'workspaceFiles') {
+        await this.pruneWorkspaceFileSnapshots(profileId, layout, maxPerLayout);
+      } else {
+        await this.pruneWorkspaceStateSnapshots(profileId, layout, maxPerLayout);
+      }
+    } catch (error) {
+      this.logger.warn('Failed to prune old snapshots.', { profileId, layout, error });
+    }
+  }
+
+  private async pruneWorkspaceStateSnapshots(
+    profileId: string,
+    layout: string,
+    maxPerLayout: number
+  ): Promise<void> {
+    await this.ensureWorkspaceStateInitialized();
+    const all = this.workspaceState.get<SchemaSnapshot[]>(SNAPSHOT_KEY, []);
+
+    const matching = all
+      .filter((s) => s.profileId === profileId && s.layout === layout)
+      .sort((a, b) => b.capturedAt.localeCompare(a.capturedAt));
+
+    if (matching.length <= maxPerLayout) {
+      return;
+    }
+
+    const idsToRemove = new Set(matching.slice(maxPerLayout).map((s) => s.id));
+    const pruned = all.filter((s) => !idsToRemove.has(s.id));
+    await this.workspaceState.update(SNAPSHOT_KEY, pruned);
+
+    this.logger.info(`Pruned ${idsToRemove.size} old snapshot(s) for layout "${layout}".`);
+  }
+
+  private async pruneWorkspaceFileSnapshots(
+    profileId: string,
+    layout: string,
+    maxPerLayout: number
+  ): Promise<void> {
+    const root = this.getWorkspaceRoot();
+    if (!root) {
+      return;
+    }
+
+    const dir = join(root, SNAPSHOT_FILE_DIR);
+    const indexPath = join(dir, SNAPSHOT_INDEX_FILE);
+    const index = await this.readIndexFile(indexPath);
+
+    const matching = index.items
+      .filter((item) => item.profileId === profileId && item.layout === layout)
+      .sort((a, b) => b.capturedAt.localeCompare(a.capturedAt));
+
+    if (matching.length <= maxPerLayout) {
+      return;
+    }
+
+    const toRemove = matching.slice(maxPerLayout);
+    const idsToRemove = new Set(toRemove.map((item) => item.id));
+
+    for (const item of toRemove) {
+      try {
+        await unlink(join(dir, item.fileName));
+      } catch {
+        this.logger.warn('Failed to delete pruned snapshot file.', { fileName: item.fileName });
+      }
+    }
+
+    index.items = index.items.filter((item) => !idsToRemove.has(item.id));
+    await writeFile(indexPath, JSON.stringify(index, null, 2), 'utf8');
+
+    this.logger.info(`Pruned ${toRemove.length} old snapshot(s) for layout "${layout}".`);
   }
 
   private resolveStorageMode(): SchemaSnapshotStorage {

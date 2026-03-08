@@ -107,6 +107,15 @@ export class SettingsService {
     return configured === 'workspaceState' ? 'workspaceState' : 'workspaceFiles';
   }
 
+  public getSnapshotsMaxPerLayout(): number {
+    const configured = this.getConfiguration('filemaker').get<number>('schema.snapshots.maxPerLayout', 20);
+    if (!Number.isFinite(configured)) {
+      return 20;
+    }
+
+    return clamp(Math.round(configured), 1, 100);
+  }
+
   public isSchemaDiagnosticsEnabled(): boolean {
     return this.getConfiguration('filemaker').get<boolean>('schema.diagnostics.enabled', false);
   }
@@ -171,6 +180,10 @@ export class SettingsService {
   public getSchemaHashAlgorithm(): string {
     const configured = this.getConfiguration('filemaker').get<string>('schema.hashAlgorithm', 'sha256').trim();
     return configured.length > 0 ? configured : 'sha256';
+  }
+
+  public isTelemetryEnabled(): boolean {
+    return this.getConfiguration('filemaker').get<boolean>('telemetry.enabled', false);
   }
 }
 

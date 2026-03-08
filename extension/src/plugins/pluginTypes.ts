@@ -15,6 +15,16 @@ export interface PluginTreeProvider {
   provider: vscode.TreeDataProvider<vscode.TreeItem>;
 }
 
+/**
+ * Plugin contract for FileMaker Data API Tools extensions.
+ *
+ * Security model:
+ * - Plugins are loaded only from trusted workspaces (workspace trust required)
+ * - Plugins receive a sandboxed API that does NOT expose SecretStorage or credentials
+ * - Plugins cannot access other plugins' state or the extension's internal services
+ * - Plugin activation failures are caught and logged without affecting the extension
+ * - All plugin-registered commands run within the extension's role guard context
+ */
 export interface FileMakerPlugin {
   id: string;
   name: string;

@@ -52,6 +52,8 @@ export async function showErrorWithDetails(
   await vscode.window.showTextDocument(document, { preview: false });
 }
 
+export const showCommandError = showErrorWithDetails;
+
 export function toUserErrorMessage(error: unknown, fallbackMessage = 'Unexpected error.'): string {
   return normalizeError(error, { fallbackMessage }).message;
 }

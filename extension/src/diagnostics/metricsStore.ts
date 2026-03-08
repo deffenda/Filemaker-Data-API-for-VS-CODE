@@ -18,6 +18,7 @@ export interface EndpointMetricsSummary {
   avgDurationMs: number;
   successCount: number;
   failureCount: number;
+  timeoutCount: number;
   reauthCount: number;
   cacheHitRatio: number;
 }
@@ -26,6 +27,7 @@ export interface MetricsSummary {
   totalRequests: number;
   successCount: number;
   failureCount: number;
+  timeoutCount: number;
   avgDurationMs: number;
   totalReauthCount: number;
   cacheHitRatio: number;
@@ -64,7 +66,8 @@ export class MetricsStore implements RequestMetricsRecorder {
       success: entry.success,
       httpStatus: entry.httpStatus,
       reauthCount: entry.reauthCount ?? 0,
-      cacheHit: entry.cacheHit ?? false
+      cacheHit: entry.cacheHit ?? false,
+      timedOut: entry.timedOut ?? false
     };
 
     const existing = this.listEntries();
@@ -79,6 +82,7 @@ export class MetricsStore implements RequestMetricsRecorder {
         totalRequests: 0,
         successCount: 0,
         failureCount: 0,
+        timeoutCount: 0,
         avgDurationMs: 0,
         totalReauthCount: 0,
         cacheHitRatio: 0,
@@ -88,6 +92,7 @@ export class MetricsStore implements RequestMetricsRecorder {
 
     const successCount = entries.filter((entry) => entry.success).length;
     const failureCount = entries.length - successCount;
+    const timeoutCount = entries.filter((entry) => entry.timedOut === true).length;
     const avgDurationMs = average(entries.map((entry) => entry.durationMs));
     const totalReauthCount = entries.reduce((sum, entry) => sum + entry.reauthCount, 0);
     const cacheHitRatio = entries.filter((entry) => entry.cacheHit).length / entries.length;
@@ -113,6 +118,7 @@ export class MetricsStore implements RequestMetricsRecorder {
           avgDurationMs: 0,
           successCount: 0,
           failureCount: 0,
+          timeoutCount: 0,
           reauthCount: 0,
           cacheHitRatio: 0
         };
@@ -125,6 +131,7 @@ export class MetricsStore implements RequestMetricsRecorder {
         avgDurationMs: average(group.map((entry) => entry.durationMs)),
         successCount: group.filter((entry) => entry.success).length,
         failureCount: group.filter((entry) => !entry.success).length,
+        timeoutCount: group.filter((entry) => entry.timedOut === true).length,
         reauthCount: group.reduce((sum, entry) => sum + entry.reauthCount, 0),
         cacheHitRatio: group.filter((entry) => entry.cacheHit).length / group.length
       };
@@ -136,6 +143,7 @@ export class MetricsStore implements RequestMetricsRecorder {
       totalRequests: entries.length,
       successCount,
       failureCount,
+      timeoutCount,
       avgDurationMs,
       totalReauthCount,
       cacheHitRatio,

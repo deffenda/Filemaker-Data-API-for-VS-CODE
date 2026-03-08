@@ -230,6 +230,7 @@ export interface RequestMetricsEntry {
   httpStatus?: number;
   reauthCount: number;
   cacheHit: boolean;
+  timedOut: boolean;
 }
 
 export interface RequestMetricsRecordInput {
@@ -242,6 +243,7 @@ export interface RequestMetricsRecordInput {
   httpStatus?: number;
   reauthCount?: number;
   cacheHit?: boolean;
+  timedOut?: boolean;
 }
 
 export interface RequestMetricsRecorder {
@@ -374,6 +376,19 @@ export interface LayoutEnvironmentDiffResult {
       attributes: string[];
     }>;
   }>;
+}
+
+export interface MultiProfileBatchRequest {
+  profiles: string[];
+  layout: string;
+  query: FindRecordsRequest;
+}
+
+export interface MultiProfileBatchResult {
+  profileId: string;
+  success: boolean;
+  recordCount: number;
+  error?: string;
 }
 
 export function isProxyProfile(profile: ConnectionProfile): boolean {

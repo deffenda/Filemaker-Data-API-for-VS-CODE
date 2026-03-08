@@ -358,6 +358,57 @@ export function popHistoryEntry<T>(stack: ExecutedCommand<T>[]): {
   };
 }
 
+export class UndoRedoStack<T> {
+  private undoStack: ExecutedCommand<T>[] = [];
+  private redoStack: ExecutedCommand<T>[] = [];
+
+  public push(entry: ExecutedCommand<T>): void {
+    this.undoStack = pushHistoryEntry(this.undoStack, entry);
+    this.redoStack = [];
+  }
+
+  public undo(): ExecutedCommand<T> | undefined {
+    const { entry, stack } = popHistoryEntry(this.undoStack);
+    if (!entry) {
+      return undefined;
+    }
+    this.undoStack = stack;
+    this.redoStack = pushHistoryEntry(this.redoStack, entry);
+    return entry;
+  }
+
+  public redo(): ExecutedCommand<T> | undefined {
+    const { entry, stack } = popHistoryEntry(this.redoStack);
+    if (!entry) {
+      return undefined;
+    }
+    this.redoStack = stack;
+    this.undoStack = pushHistoryEntry(this.undoStack, entry);
+    return entry;
+  }
+
+  public canUndo(): boolean {
+    return this.undoStack.length > 0;
+  }
+
+  public canRedo(): boolean {
+    return this.redoStack.length > 0;
+  }
+
+  public clear(): void {
+    this.undoStack = [];
+    this.redoStack = [];
+  }
+
+  public get undoCount(): number {
+    return this.undoStack.length;
+  }
+
+  public get redoCount(): number {
+    return this.redoStack.length;
+  }
+}
+
 export function snapToGrid(value: number, gridSize: number): number {
   if (!Number.isFinite(gridSize) || gridSize <= 1) {
     return Math.round(value);

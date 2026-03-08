@@ -3,7 +3,6 @@ import type * as vscode from 'vscode';
 interface CspOptions {
   nonce: string;
   allowInlineStyleWithNonce?: boolean;
-  allowUnsafeInlineStyles?: boolean;
   connectSources?: string[];
   imageSources?: string[];
 }
@@ -24,10 +23,6 @@ export function buildWebviewCsp(webview: vscode.Webview, options: CspOptions): s
   if (options.allowInlineStyleWithNonce) {
     styleSources.push(`'nonce-${options.nonce}'`);
   }
-  if (options.allowUnsafeInlineStyles) {
-    styleSources.push(`'unsafe-inline'`);
-  }
-
   const connectSources = [webview.cspSource, ...(options.connectSources ?? [])];
   const imageSources = [webview.cspSource, 'data:', ...(options.imageSources ?? [])];
 

@@ -4,7 +4,7 @@
 
 ## Task 1: Add loading skeleton states to all webviews
 
-**Status:** ready_for_review
+**Status:** done
 **Phase:** 1A
 **Depends on:** none
 **Files to modify:**

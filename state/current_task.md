@@ -1,24 +1,15 @@
 # Current Task
 
-task_id: 1
-title: Add loading skeleton states to all webviews
-status: ready_for_review
-phase: 1A
-depends_on: none
+task_id: 2
+title: Fix recordEditor flickering — targeted DOM updates and debounce
+status: pending
+phase: 1B
+depends_on: Task 1
 
-## Files modified
+## Files to modify
 
-- `src/webviews/queryBuilder/ui/index.js`
-- `src/webviews/queryBuilder/ui/styles.css`
 - `src/webviews/recordEditor/ui/index.js`
-- `src/webviews/recordEditor/ui/styles.css`
-- `src/webviews/recordViewer/ui/index.js`
-- `src/webviews/recordViewer/ui/styles.css`
-- `src/webviews/scriptRunner/ui/index.js`
-- `src/webviews/scriptRunner/ui/styles.css`
-- `src/webviews/schemaDiff/ui/index.js`
-- `src/webviews/schemaDiff/ui/styles.css`
 
-## Waiting on
+## Next action
 
-Reviewer to verify implementation against AC-1 and mark `done`, then Planner will advance to Task 2.
+Codex implements Task 2 per instructions in ai/tasks.md.

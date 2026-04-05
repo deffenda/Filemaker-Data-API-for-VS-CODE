@@ -2,7 +2,7 @@
 
 task_id: 2
 title: Fix recordEditor flickering — targeted DOM updates and debounce
-status: ready_for_codex
+status: ready_for_review
 phase: 1B
 depends_on: Task 1 (done, merged to main)
 
@@ -12,4 +12,4 @@ depends_on: Task 1 (done, merged to main)
 
 ## Next action
 
-Codex implements Task 2 per instructions in ai/tasks.md.
+Review the Task 2 implementation on the pull request and verify local validation results.

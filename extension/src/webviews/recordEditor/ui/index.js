@@ -2,10 +2,17 @@ const vscode = acquireVsCodeApi();
 
 function debounce(fn, ms) {
   let timer;
-  return function (...args) {
+  function wrapped(...args) {
     clearTimeout(timer);
     timer = setTimeout(() => fn.apply(this, args), ms);
+  }
+
+  wrapped.cancel = () => {
+    clearTimeout(timer);
+    timer = undefined;
   };
+
+  return wrapped;
 }
 
 const state = {
@@ -126,6 +133,7 @@ saveButton.addEventListener('click', () => {
     return;
   }
 
+  debouncedMarkDirtyState.cancel();
   vscode.postMessage({ type: 'saveRecord', payload });
   setStatus('Saving...');
 });
@@ -135,8 +143,9 @@ discardButton.addEventListener('click', () => {
     return;
   }
 
+  debouncedMarkDirtyState.cancel();
   state.draftFieldData = { ...state.originalFieldData };
-  syncFieldEditor();
+  renderFieldEditor();
   setStatus('Draft changes discarded.');
 });
 
@@ -170,6 +179,7 @@ function applyRecord(payload) {
     return;
   }
 
+  debouncedMarkDirtyState.cancel();
   state.loaded = payload;
   state.originalFieldData = clone(payload.record.fieldData);
   state.draftFieldData = clone(payload.record.fieldData);
@@ -207,6 +217,7 @@ function applySaved(payload) {
     return;
   }
 
+  debouncedMarkDirtyState.cancel();
   state.originalFieldData = clone(payload.record.fieldData);
   state.draftFieldData = clone(payload.record.fieldData);
   rawRecord.textContent = JSON.stringify(payload.record, null, 2);
@@ -325,10 +336,6 @@ function renderFieldEditor() {
   }
 
   updateFieldEditorValues(keys);
-}
-
-function syncFieldEditor() {
-  renderFieldEditor();
 }
 
 function hasMatchingFieldInputs(keys) {

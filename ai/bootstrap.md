@@ -66,41 +66,33 @@ All webviews use `innerHTML = ''` to wipe the DOM and rebuild from scratch on ev
 
 ## Workflow
 
-### Roles
+Role boundaries:
 
-| Role | Actor | Responsibilities |
-|------|-------|-----------------|
-| **Planner** | Planning agent (Claude) | Produce/update plan.md, tasks.md, acceptance.md. When state is `ready_for_claude`, read tasks.md, mark current task `done`, advance `current_task.md` to next task, set state to `ready_for_codex`. If no tasks remain, set state to `done`. |
-| **Codex** | Codex agent | Execute the current task. Create a PR. Set state to `ready_for_review`. When PR is accepted/merged, set state to `ready_for_claude`. |
+- Claude plans only.
+- Codex implements only.
+- Review happens through GitHub pull request, CI, and Gemini Code Assist on GitHub.
 
-### States
+Canonical state model:
 
-| State | Meaning | Owner |
-|-------|---------|-------|
-| `ready_for_claude` | PR merged and tasks remain — Claude marks finished task done, advances to next task, sets `ready_for_codex` | Claude |
-| `ready_for_codex` | Current task is queued and ready for Codex to implement | Codex |
-| `ready_for_review` | Codex opened a PR, waiting for GitHub CI and review | GitHub |
-| `review_failed_fix_required` | CI or review found implementation issues — Codex fixes same task | Codex |
-| `blocked` | Work cannot continue without intervention | Manual |
-| `done` | No remaining tasks in backlog — intentional stop point | None |
+- `ready_for_claude` = current task is finished and Claude should mark it done, select the next task, and advance to `ready_for_codex`; OR planning or replanning is needed
+- `ready_for_codex` = current task is queued and ready for Codex to implement
+- `ready_for_review` = branch should be pushed or updated and reviewed through GitHub PR + CI
+- `review_failed_fix_required` = review found implementation issues that Codex should fix
+- `blocked` = work cannot continue without intervention
+- `done` = no remaining tasks in the backlog; intentional stop point
 
-### State Machine
+Loop:
 
-```
-ready_for_codex   →  (Codex executes, opens PR)        →  ready_for_review
-ready_for_review  →  (PR accepted/merged)               →  ready_for_claude
-ready_for_review  →  (PR rejected / changes requested)  →  blocked
-blocked           →  (Codex addresses feedback)          →  ready_for_review
-ready_for_claude  →  (Planner marks done, queues next)   →  ready_for_codex
-ready_for_claude  →  (Planner marks done, no more tasks) →  done
-```
-
-### Rules
-
-1. Planner produces plan, tasks, acceptance criteria
-2. Each task maps to one PR-sized unit of work
-3. Codex executes the current task, opens a PR, sets `ready_for_review`
-4. PR merge is the review gate — when merged, Codex sets state to `ready_for_claude`
-5. Planner reads state, marks the finished task `done` in tasks.md, advances `current_task.md` to the next task, sets `ready_for_codex`
-6. If no tasks remain in the backlog, Planner sets state to `done`
-7. Each task must pass lint + typecheck + test before the PR is opened
+1. Claude creates or refines `ai/plan.md`, `ai/tasks.md`, `ai/acceptance.md`, and `state/current_task.md`.
+2. Claude sets `state/controller.md` to `ready_for_codex`.
+3. Codex implements the current task and runs local validation (lint, typecheck, test).
+4. Codex pushes the branch, opens or updates the PR, and sets `state/controller.md` to `ready_for_review`.
+5. GitHub CI and PR review determine the outcome.
+6. If review finds implementation issues, set `review_failed_fix_required`.
+7. Codex fixes review issues and returns to `ready_for_review`.
+8. If review reveals a planning problem, set `ready_for_claude`.
+9. If review passes and PR is merged:
+   - If tasks remain in `ai/tasks.md` with status `pending`, set `ready_for_claude`.
+   - If no tasks remain, set `done`.
+   - Claude reads `ready_for_claude`, marks the finished task `done`, advances `state/current_task.md` to the next task, and sets `ready_for_codex`.
+10. Each task must pass lint + typecheck + test before the PR is opened.

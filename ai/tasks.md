@@ -66,9 +66,9 @@
 
 ## Task 2: Fix recordEditor flickering — targeted DOM updates and debounce
 
-**Status:** pending
+**Status:** ready_for_codex
 **Phase:** 1B
-**Depends on:** Task 1
+**Depends on:** Task 1 (done, merged to main)
 **Files to modify:**
 - `src/webviews/recordEditor/ui/index.js`
 

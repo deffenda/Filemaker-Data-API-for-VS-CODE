@@ -38,6 +38,15 @@ const resultSummary = document.getElementById('resultSummary');
 const tableContainer = document.getElementById('tableContainer');
 const rawContainer = document.getElementById('rawContainer');
 const historyContainer = document.getElementById('historyContainer');
+const queryBuilderPanels = Array.from(document.querySelectorAll('.panel'));
+const queryBuilderSkeleton = createLoadingSkeleton(['short', 'long', 'medium', 'long', 'medium']);
+let queryBuilderReady = false;
+
+const queryBuilderHeader = document.querySelector('.header');
+if (queryBuilderHeader && queryBuilderPanels.length > 0) {
+  queryBuilderHeader.insertAdjacentElement('afterend', queryBuilderSkeleton);
+  setElementsVisible(queryBuilderPanels, false);
+}
 
 window.addEventListener('message', (event) => {
   const message = event.data;
@@ -48,6 +57,7 @@ window.addEventListener('message', (event) => {
   switch (message.type) {
     case 'init':
       applyInit(message.payload);
+      revealQueryBuilder();
       break;
     case 'layoutsLoaded':
       applyLayouts(message.payload);
@@ -330,6 +340,36 @@ function parseNumber(value) {
 
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function createLoadingSkeleton(widths) {
+  const skeleton = document.createElement('div');
+  skeleton.className = 'loading-skeleton';
+
+  widths.forEach((width) => {
+    const line = document.createElement('div');
+    line.className = `skeleton-line ${width}`;
+    skeleton.appendChild(line);
+  });
+
+  return skeleton;
+}
+
+function setElementsVisible(elements, isVisible) {
+  elements.forEach((element) => {
+    element.style.display = isVisible ? '' : 'none';
+  });
+
+  queryBuilderSkeleton.classList.toggle('hidden', isVisible);
+}
+
+function revealQueryBuilder() {
+  if (queryBuilderReady) {
+    return;
+  }
+
+  queryBuilderReady = true;
+  setElementsVisible(queryBuilderPanels, true);
 }
 
 function renderQueryResult(payload) {

@@ -21,6 +21,15 @@ const copyFetchButton = document.getElementById('copyFetchButton');
 const status = document.getElementById('status');
 const summary = document.getElementById('summary');
 const rawResult = document.getElementById('rawResult');
+const scriptRunnerPanels = Array.from(document.querySelectorAll('.panel'));
+const scriptRunnerSkeleton = createLoadingSkeleton(['short', 'long', 'medium', 'long']);
+let scriptRunnerReady = false;
+
+const scriptRunnerHeader = document.querySelector('.header');
+if (scriptRunnerHeader && scriptRunnerPanels.length > 0) {
+  scriptRunnerHeader.insertAdjacentElement('afterend', scriptRunnerSkeleton);
+  setElementsVisible(scriptRunnerPanels, false);
+}
 
 window.addEventListener('message', (event) => {
   const message = event.data;
@@ -31,6 +40,7 @@ window.addEventListener('message', (event) => {
   switch (message.type) {
     case 'init':
       applyInit(message.payload);
+      revealScriptRunner();
       break;
     case 'layoutsLoaded':
       applyLayouts(message.payload);
@@ -230,6 +240,36 @@ function collectPayload() {
     scriptName,
     scriptParam: scriptParamInput.value
   };
+}
+
+function createLoadingSkeleton(widths) {
+  const skeleton = document.createElement('div');
+  skeleton.className = 'loading-skeleton';
+
+  widths.forEach((width) => {
+    const line = document.createElement('div');
+    line.className = `skeleton-line ${width}`;
+    skeleton.appendChild(line);
+  });
+
+  return skeleton;
+}
+
+function setElementsVisible(elements, isVisible) {
+  elements.forEach((element) => {
+    element.style.display = isVisible ? '' : 'none';
+  });
+
+  scriptRunnerSkeleton.classList.toggle('hidden', isVisible);
+}
+
+function revealScriptRunner() {
+  if (scriptRunnerReady) {
+    return;
+  }
+
+  scriptRunnerReady = true;
+  setElementsVisible(scriptRunnerPanels, true);
 }
 
 function renderResult(payload) {

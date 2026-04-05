@@ -94,6 +94,51 @@ button:hover {
   font-weight: 600;
 }
 
+.loading-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  background: color-mix(in srgb, var(--panel) 92%, var(--bg) 8%);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-top: 12px;
+}
+
+.loading-skeleton .skeleton-line {
+  height: 16px;
+  background: var(--vscode-editor-inactiveSelectionBackground, rgba(215, 222, 232, 0.9));
+  border-radius: 4px;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+.loading-skeleton .skeleton-line.short {
+  width: 40%;
+}
+
+.loading-skeleton .skeleton-line.medium {
+  width: 65%;
+}
+
+.loading-skeleton .skeleton-line.long {
+  width: 90%;
+}
+
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+.loading-skeleton.hidden {
+  display: none;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;

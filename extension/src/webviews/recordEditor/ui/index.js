@@ -23,6 +23,23 @@ const statusEl = document.getElementById('status');
 const fieldEditor = document.getElementById('fieldEditor');
 const patchPreview = document.getElementById('patchPreview');
 const rawRecord = document.getElementById('rawRecord');
+const recordEditorPanel = fieldEditor.closest('.panel');
+const recordEditorHeading = recordEditorPanel ? recordEditorPanel.querySelector('h2') : null;
+const recordEditorContent = recordEditorPanel
+  ? Array.from(recordEditorPanel.children).filter((element) => element.tagName !== 'H2')
+  : [fieldEditor, patchPreview, rawRecord];
+const recordEditorSkeleton = createLoadingSkeleton(['short', 'long', 'medium', 'long']);
+let recordEditorReady = false;
+
+if (recordEditorPanel) {
+  if (recordEditorHeading) {
+    recordEditorHeading.insertAdjacentElement('afterend', recordEditorSkeleton);
+  } else {
+    recordEditorPanel.prepend(recordEditorSkeleton);
+  }
+
+  setElementsVisible(recordEditorContent, false);
+}
 
 window.addEventListener('message', (event) => {
   const message = event.data;
@@ -39,6 +56,7 @@ window.addEventListener('message', (event) => {
       break;
     case 'recordLoaded':
       applyRecord(message.payload);
+      revealRecordEditor();
       break;
     case 'draftValidated':
       applyValidation(message.payload);
@@ -184,7 +202,38 @@ function applySaved(payload) {
   rawRecord.textContent = JSON.stringify(payload.record, null, 2);
   patchPreview.textContent = '';
   renderFieldEditor();
+  revealRecordEditor();
   setStatus('Record saved.');
+}
+
+function createLoadingSkeleton(widths) {
+  const skeleton = document.createElement('div');
+  skeleton.className = 'loading-skeleton';
+
+  widths.forEach((width) => {
+    const line = document.createElement('div');
+    line.className = `skeleton-line ${width}`;
+    skeleton.appendChild(line);
+  });
+
+  return skeleton;
+}
+
+function setElementsVisible(elements, isVisible) {
+  elements.forEach((element) => {
+    element.style.display = isVisible ? '' : 'none';
+  });
+
+  recordEditorSkeleton.classList.toggle('hidden', isVisible);
+}
+
+function revealRecordEditor() {
+  if (recordEditorReady) {
+    return;
+  }
+
+  recordEditorReady = true;
+  setElementsVisible(recordEditorContent, true);
 }
 
 function renderProfiles() {

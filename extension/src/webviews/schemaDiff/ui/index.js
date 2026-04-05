@@ -6,6 +6,15 @@ const added = document.getElementById('added');
 const removed = document.getElementById('removed');
 const changed = document.getElementById('changed');
 const exportButton = document.getElementById('exportButton');
+const diffSections = Array.from(document.querySelectorAll('.container > section'));
+const diffSkeleton = createLoadingSkeleton(['short', 'medium', 'long', 'medium']);
+let diffReady = false;
+
+const diffHeader = document.querySelector('.container > header');
+if (diffHeader && diffSections.length > 0) {
+  diffHeader.insertAdjacentElement('afterend', diffSkeleton);
+  setElementsVisible(diffSections, false);
+}
 
 window.addEventListener('message', (event) => {
   const message = event.data;
@@ -14,6 +23,7 @@ window.addEventListener('message', (event) => {
   }
 
   renderDiff(message.payload);
+  revealDiff();
 });
 
 exportButton.addEventListener('click', () => {
@@ -76,6 +86,36 @@ function renderChanged(container, rows) {
     block.appendChild(list);
     container.appendChild(block);
   }
+}
+
+function createLoadingSkeleton(widths) {
+  const skeleton = document.createElement('div');
+  skeleton.className = 'loading-skeleton';
+
+  widths.forEach((width) => {
+    const line = document.createElement('div');
+    line.className = `skeleton-line ${width}`;
+    skeleton.appendChild(line);
+  });
+
+  return skeleton;
+}
+
+function setElementsVisible(elements, isVisible) {
+  elements.forEach((element) => {
+    element.style.display = isVisible ? '' : 'none';
+  });
+
+  diffSkeleton.classList.toggle('hidden', isVisible);
+}
+
+function revealDiff() {
+  if (diffReady) {
+    return;
+  }
+
+  diffReady = true;
+  setElementsVisible(diffSections, true);
 }
 
 function escapeHtml(value) {

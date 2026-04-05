@@ -17,6 +17,23 @@ const status = document.getElementById('status');
 const fieldDataContainer = document.getElementById('fieldDataContainer');
 const relatedDataContainer = document.getElementById('relatedDataContainer');
 const rawJson = document.getElementById('rawJson');
+const recordViewerPanel = fieldDataContainer.closest('.panel');
+const recordViewerHeading = recordViewerPanel ? recordViewerPanel.querySelector('h2') : null;
+const recordViewerContent = recordViewerPanel
+  ? Array.from(recordViewerPanel.children).filter((element) => element.tagName !== 'H2')
+  : [fieldDataContainer, relatedDataContainer, rawJson];
+const recordViewerSkeleton = createLoadingSkeleton(['short', 'long', 'medium', 'long']);
+let recordViewerReady = false;
+
+if (recordViewerPanel) {
+  if (recordViewerHeading) {
+    recordViewerHeading.insertAdjacentElement('afterend', recordViewerSkeleton);
+  } else {
+    recordViewerPanel.prepend(recordViewerSkeleton);
+  }
+
+  setElementsVisible(recordViewerContent, false);
+}
 
 window.addEventListener('message', (event) => {
   const message = event.data;
@@ -35,6 +52,7 @@ window.addEventListener('message', (event) => {
     }
     case 'recordLoaded': {
       renderRecord(message.payload);
+      revealRecordViewer();
       break;
     }
     case 'error': {
@@ -222,6 +240,36 @@ function renderRecord(payload) {
 
   rawJson.textContent = JSON.stringify(payload, null, 2);
   setStatus(`Loaded record ${record.recordId || ''}.`);
+}
+
+function createLoadingSkeleton(widths) {
+  const skeleton = document.createElement('div');
+  skeleton.className = 'loading-skeleton';
+
+  widths.forEach((width) => {
+    const line = document.createElement('div');
+    line.className = `skeleton-line ${width}`;
+    skeleton.appendChild(line);
+  });
+
+  return skeleton;
+}
+
+function setElementsVisible(elements, isVisible) {
+  elements.forEach((element) => {
+    element.style.display = isVisible ? '' : 'none';
+  });
+
+  recordViewerSkeleton.classList.toggle('hidden', isVisible);
+}
+
+function revealRecordViewer() {
+  if (recordViewerReady) {
+    return;
+  }
+
+  recordViewerReady = true;
+  setElementsVisible(recordViewerContent, true);
 }
 
 function renderFieldTable(fieldData) {

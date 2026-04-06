@@ -3,6 +3,9 @@
 ## CHANGED
 
 - `extension/src/webviews/recordEditor/ui/index.js`
+- `state/current_task.md`
+- `state/controller.md`
+- `state/implementation_notes.md`
 
 ## DID
 
@@ -12,6 +15,8 @@
 - Cancelled any pending dirty-state debounce before save, discard, and record refresh so save status cannot be overwritten by stale input feedback.
 - Removed the redundant `syncFieldEditor()` wrapper and called `renderFieldEditor()` directly from discard handling.
 - Bumped `axios` in `extension` and `next` in `runtime-next` to patched versions so the PR can clear the security audit gate.
+- Reclaimed the existing `codex/2-record-editor-dom-updates` branch and PR after confirming the Task 2 implementation was already present on the branch.
+- Resolved the two stale PR review threads after confirming their requested fixes are present in the current branch head.
 
 ## VALIDATED
 
@@ -19,7 +24,8 @@
 - `node --check extension/src/webviews/recordEditor/ui/index.js`
 - `npm run typecheck -w extension` currently fails in the local workspace because `zod` is not installed.
 - `npm run typecheck -w runtime-next` currently fails in the local workspace because `@types/react` and `@types/react-dom` are not installed.
+- GitHub PR `#1` CI `build-test` checks are green.
 
 ## NEXT
 
-- Re-run GitHub CI for Task 2 and confirm the two PR review threads are resolved by the updated branch.
+- Wait for reviewer confirmation or merge on GitHub PR `#1`.

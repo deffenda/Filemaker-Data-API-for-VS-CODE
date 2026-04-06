@@ -64,15 +64,31 @@
 
 ---
 
-## Task 2: Fix recordEditor flickering — targeted DOM updates and debounce
+## Task 2: Fix all webview flickering and implement responsive CSS across all webviews
 
 **Status:** ready_for_codex
-**Phase:** 1B
+**Phase:** 1B-1E
 **Depends on:** Task 1 (done, merged to main)
 **Files to modify:**
 - `src/webviews/recordEditor/ui/index.js`
+- `src/webviews/queryBuilder/ui/index.js`
+- `src/webviews/recordViewer/ui/index.js`
+- `src/webviews/scriptRunner/ui/index.js`
+- `src/webviews/schemaDiff/ui/index.js`
+- `src/webviews/queryBuilder/ui/styles.css`
+- `src/webviews/recordEditor/ui/styles.css`
+- `src/webviews/recordViewer/ui/styles.css`
+- `src/webviews/scriptRunner/ui/styles.css`
+- `src/webviews/schemaDiff/ui/styles.css`
+- `src/webviews/queryBuilder/index.ts`
+- `src/webviews/recordEditor/index.ts`
+- `src/webviews/recordViewer/index.ts`
+- `src/webviews/scriptRunner/index.ts`
+- `src/webviews/schemaDiff/index.ts`
 
 **Instructions:**
+
+### Phase 1B: Fix recordEditor flickering — targeted DOM updates and debounce
 
 1. Read `src/webviews/recordEditor/ui/index.js` fully.
 
@@ -98,17 +114,7 @@
 
 5. Run `npm run lint` — must pass.
 
----
-
-## Task 3: Fix queryBuilder flickering — targeted updates and scroll fix
-
-**Status:** pending
-**Phase:** 1C
-**Depends on:** Task 1
-**Files to modify:**
-- `src/webviews/queryBuilder/ui/index.js`
-
-**Instructions:**
+### Phase 1C: Fix queryBuilder flickering — targeted updates and scroll fix
 
 1. Read `src/webviews/queryBuilder/ui/index.js` fully.
 
@@ -138,19 +144,7 @@
 
 6. Run `npm run lint` — must pass.
 
----
-
-## Task 4: Fix remaining webview flickering — recordViewer, scriptRunner, schemaDiff
-
-**Status:** pending
-**Phase:** 1D
-**Depends on:** Task 1
-**Files to modify:**
-- `src/webviews/recordViewer/ui/index.js`
-- `src/webviews/scriptRunner/ui/index.js`
-- `src/webviews/schemaDiff/ui/index.js`
-
-**Instructions:**
+### Phase 1D: Fix remaining webview flickering — recordViewer, scriptRunner, schemaDiff
 
 1. Read each file fully.
 
@@ -173,26 +167,7 @@
 
 5. Run `npm run lint` — must pass.
 
----
-
-## Task 5: Responsive CSS improvements across all webviews
-
-**Status:** pending
-**Phase:** 1E
-**Depends on:** Task 1
-**Files to modify:**
-- `src/webviews/queryBuilder/ui/styles.css`
-- `src/webviews/recordEditor/ui/styles.css`
-- `src/webviews/recordViewer/ui/styles.css`
-- `src/webviews/scriptRunner/ui/styles.css`
-- `src/webviews/schemaDiff/ui/styles.css`
-- `src/webviews/queryBuilder/index.ts`
-- `src/webviews/recordEditor/index.ts`
-- `src/webviews/recordViewer/index.ts`
-- `src/webviews/scriptRunner/index.ts`
-- `src/webviews/schemaDiff/index.ts`
-
-**Instructions:**
+### Phase 1E: Responsive CSS improvements across all webviews
 
 1. In each `styles.css`:
    - Replace `.container { max-width: 1200px; }` with `.container { max-width: min(1200px, 95vw); }` (or equivalent per file — the max-width value varies, some use 1100px).
@@ -207,19 +182,36 @@
 
 3. Run `npm run lint` and `npm run typecheck` — must pass.
 
+**Done when:** All of the following:
+- recordEditor: no full table rebuilds on data updates; debounced input handlers; "Discard" works via map
+- queryBuilder: option diffs on profile/layout selects; scroll handler uses requestAnimationFrame; virtualization threshold is 50
+- recordViewer: targeted cell updates; portal only rebuilt when keys change
+- scriptRunner: diff-based select update
+- schemaDiff: fade-in transitions on diff sections
+- All CSS files: fluid max-width, clamp font sizes, fluid padding, table scroll wrappers
+- All controller index.ts files: aria-live, role="status", role="table" attributes present
+- `npm run lint` and `npm run typecheck` pass
+
 ---
 
-## Task 6: Configure coverage reporting in vitest and CI
+## Task 3: Test infrastructure — coverage config, ProxyClient, command handler, and webview snapshot tests
 
 **Status:** pending
-**Phase:** 2A
+**Phase:** 2A-2F
 **Depends on:** none
-**Files to modify:**
+**Files to modify/create:**
 - `vitest.config.ts`
 - `package.json`
 - `.github/workflows/ci.yml`
+- `test/unit/proxyClient.test.ts`
+- `test/unit/commands/core.test.ts`
+- `test/unit/commands/data.test.ts`
+- `test/unit/commands/features.test.ts`
+- `test/unit/webviews/htmlSnapshots.test.ts`
 
 **Instructions:**
+
+### Phase 2A: Configure coverage reporting in vitest and CI
 
 1. Install `@vitest/coverage-v8` as a devDependency:
    - Add `"@vitest/coverage-v8": "^3.0.0"` to `devDependencies` in `package.json` (match the major version of the installed vitest).
@@ -243,17 +235,7 @@ coverage: {
 
 6. Run `npm run lint` and `npm run typecheck` — must pass.
 
----
-
-## Task 7: Add ProxyClient unit tests
-
-**Status:** pending
-**Phase:** 2B
-**Depends on:** none
-**Files to create:**
-- `test/unit/proxyClient.test.ts`
-
-**Instructions:**
+### Phase 2B: Add ProxyClient unit tests
 
 1. Read `src/services/proxyClient.ts` fully to understand all methods and their behavior.
 
@@ -272,17 +254,7 @@ coverage: {
 
 5. Run `npm test` — all tests must pass.
 
----
-
-## Task 8: Add command handler tests — core profile and connection commands
-
-**Status:** pending
-**Phase:** 2C
-**Depends on:** none
-**Files to create:**
-- `test/unit/commands/core.test.ts`
-
-**Instructions:**
+### Phase 2C: Add command handler tests — core profile and connection commands
 
 1. Read `src/commands/index.ts` fully (focus on addConnectionProfile, editConnectionProfile, removeConnectionProfile, connect, disconnect handlers).
 
@@ -305,18 +277,7 @@ coverage: {
 
 5. Run `npm test` — all tests must pass.
 
----
-
-## Task 9: Add command handler tests — data and feature commands
-
-**Status:** pending
-**Phase:** 2D/2E
-**Depends on:** Task 8
-**Files to create:**
-- `test/unit/commands/data.test.ts`
-- `test/unit/commands/features.test.ts`
-
-**Instructions:**
+### Phase 2D/2E: Add command handler tests — data and feature commands
 
 1. Read the relevant command files in `src/commands/` (batch.ts, recordEdit.ts, savedQueries.ts, schema.ts, schemaSnapshots.ts, scriptRunner.ts, typeGen.ts, enterprise.ts).
 
@@ -336,17 +297,7 @@ coverage: {
 
 4. Run `npm test` — all tests must pass.
 
----
-
-## Task 10: Add webview HTML snapshot tests
-
-**Status:** pending
-**Phase:** 2F
-**Depends on:** none
-**Files to create:**
-- `test/unit/webviews/htmlSnapshots.test.ts`
-
-**Instructions:**
+### Phase 2F: Add webview HTML snapshot tests
 
 1. Read each webview controller's `index.ts` to find the method that generates HTML (typically a private `getHtmlForWebview` or inline template in the constructor).
 
@@ -364,17 +315,32 @@ coverage: {
 
 6. Run `npm test` — all tests must pass. Snapshot files will be created in `test/unit/webviews/__snapshots__/`.
 
+**Done when:** All of the following:
+- Coverage configured in vitest.config.ts; `npm run test:coverage` produces lcov output
+- CI uses `npm run test:coverage`
+- proxyClient.test.ts covers all public methods
+- core.test.ts covers profile CRUD and connect/disconnect commands
+- data.test.ts and features.test.ts cover data and feature commands
+- htmlSnapshots.test.ts covers all six webviews
+- `npm test` passes
+
 ---
 
-## Task 11: Add fmExplorer tree view tests
+## Task 4: Test infrastructure — tree view and utility tests
 
 **Status:** pending
-**Phase:** 2G
+**Phase:** 2G-2H
 **Depends on:** none
 **Files to create:**
 - `test/unit/views/fmExplorer.test.ts`
+- `test/unit/errorUx.test.ts`
+- `test/unit/hash.test.ts`
+- `test/unit/jsonlWriter.test.ts`
+- `test/unit/csp.test.ts`
 
 **Instructions:**
+
+### Phase 2G: Add fmExplorer tree view tests
 
 1. Read `src/views/fmExplorer.ts` fully.
 
@@ -392,20 +358,7 @@ coverage: {
 
 6. Run `npm test` — all tests must pass.
 
----
-
-## Task 12: Add missing utility tests
-
-**Status:** pending
-**Phase:** 2H
-**Depends on:** none
-**Files to create:**
-- `test/unit/errorUx.test.ts`
-- `test/unit/hash.test.ts`
-- `test/unit/jsonlWriter.test.ts`
-- `test/unit/csp.test.ts`
-
-**Instructions:**
+### Phase 2H: Add missing utility tests
 
 1. Read each utility file:
    - `src/utils/errorUx.ts`
@@ -421,18 +374,33 @@ coverage: {
 
 3. Run `npm test` — all tests must pass.
 
+**Done when:** All of the following:
+- fmExplorer.test.ts covers tree structure and refresh behavior
+- errorUx.test.ts, hash.test.ts, jsonlWriter.test.ts, csp.test.ts all pass
+- `npm test` passes
+
 ---
 
-## Task 13: Add Create Record and Delete Record types
+## Task 5: Add Create Record and Delete Record end-to-end
 
 **Status:** pending
-**Phase:** 3A
+**Phase:** 3A-3E
 **Depends on:** none
-**Files to modify:**
+**Files to modify/create:**
 - `src/types/fm.ts`
 - `src/types/dataApi.ts`
+- `src/services/fmClient.ts`
+- `src/services/proxyClient.ts`
+- `test/integration/createRecord.integration.test.ts`
+- `test/integration/deleteRecord.integration.test.ts`
+- `package.json`
+- `src/commands/index.ts`
+- `src/webviews/recordEditor/index.ts`
+- `src/views/fmExplorer.ts`
 
 **Instructions:**
+
+### Phase 3A: Add Create Record and Delete Record types
 
 1. In `src/types/fm.ts`, add after the `EditRecordResult` interface:
 ```typescript
@@ -463,18 +431,7 @@ export interface DataApiDeleteRecordResponse {
 
 3. Run `npm run lint` and `npm run typecheck` — must pass.
 
----
-
-## Task 14: Add createRecord and deleteRecord to FMClient and ProxyClient
-
-**Status:** pending
-**Phase:** 3B/3C
-**Depends on:** Task 13
-**Files to modify:**
-- `src/services/fmClient.ts`
-- `src/services/proxyClient.ts`
-
-**Instructions:**
+### Phase 3B/3C: Add createRecord and deleteRecord to FMClient and ProxyClient
 
 1. Read `src/services/fmClient.ts` — study the `editRecord` method as the template.
 
@@ -498,18 +455,7 @@ export interface DataApiDeleteRecordResponse {
 
 5. Run `npm run lint` and `npm run typecheck` — must pass.
 
----
-
-## Task 15: Integration tests for createRecord and deleteRecord
-
-**Status:** pending
-**Phase:** 3D
-**Depends on:** Task 14
-**Files to create:**
-- `test/integration/createRecord.integration.test.ts`
-- `test/integration/deleteRecord.integration.test.ts`
-
-**Instructions:**
+### Phase 3D: Integration tests for createRecord and deleteRecord
 
 1. Follow the patterns in `test/integration/fmClient.integration.test.ts`.
 
@@ -528,20 +474,7 @@ export interface DataApiDeleteRecordResponse {
 
 4. Run `npm test` — all tests must pass.
 
----
-
-## Task 16: Register commands, wire RecordEditor create mode, explorer menus
-
-**Status:** pending
-**Phase:** 3E
-**Depends on:** Task 14
-**Files to modify:**
-- `package.json`
-- `src/commands/index.ts`
-- `src/webviews/recordEditor/index.ts`
-- `src/views/fmExplorer.ts`
-
-**Instructions:**
+### Phase 3E: Register commands, wire RecordEditor create mode, explorer menus
 
 1. In `package.json`:
    - Add commands: `filemakerDataApiTools.createRecord` ("FileMaker: Create Record"), `filemakerDataApiTools.deleteRecord` ("FileMaker: Delete Record")
@@ -566,9 +499,20 @@ export interface DataApiDeleteRecordResponse {
 
 5. Run `npm run lint`, `npm run typecheck`, `npm test` — all must pass.
 
+**Done when:** All of the following:
+- CreateRecordResult and DeleteRecordResult types defined in fm.ts
+- DataApiCreateRecordResponse and DataApiDeleteRecordResponse types defined in dataApi.ts
+- fmClient.createRecord and fmClient.deleteRecord implemented and typed
+- proxyClient passthrough methods for both implemented
+- Integration tests for both pass
+- Commands registered in package.json with correct activation events and menus
+- RecordEditor supports create mode
+- fmExplorer layout nodes have correct contextValue
+- `npm run lint`, `npm run typecheck`, `npm test` all pass
+
 ---
 
-## Task 17: Final CI pass and version bump
+## Task 6: Final CI pass and version bump
 
 **Status:** pending
 **Phase:** 4A

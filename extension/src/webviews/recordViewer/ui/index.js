@@ -17,6 +17,8 @@ const status = document.getElementById('status');
 const fieldDataContainer = document.getElementById('fieldDataContainer');
 const relatedDataContainer = document.getElementById('relatedDataContainer');
 const rawJson = document.getElementById('rawJson');
+const fieldCellRefs = new Map();
+const portalSectionRefs = new Map();
 const recordViewerPanel = fieldDataContainer.closest('.panel');
 const recordViewerHeading = recordViewerPanel ? recordViewerPanel.querySelector('h2') : null;
 const recordViewerContent = recordViewerPanel
@@ -216,27 +218,8 @@ function renderRecord(payload) {
   const fieldData = record.fieldData && typeof record.fieldData === 'object' ? record.fieldData : {};
   const relatedData = record.portalData && typeof record.portalData === 'object' ? record.portalData : {};
 
-  fieldDataContainer.innerHTML = '';
-  relatedDataContainer.innerHTML = '';
-
-  fieldDataContainer.appendChild(renderFieldTable(fieldData));
-
-  const relatedKeys = Object.keys(relatedData);
-  if (relatedKeys.length > 0) {
-    for (const key of relatedKeys) {
-      const details = document.createElement('details');
-      details.className = 'related-block';
-
-      const summary = document.createElement('summary');
-      summary.textContent = `${key} (${Array.isArray(relatedData[key]) ? relatedData[key].length : 0})`;
-      details.appendChild(summary);
-
-      const entries = Array.isArray(relatedData[key]) ? relatedData[key] : [];
-      details.appendChild(renderRelatedRows(entries));
-
-      relatedDataContainer.appendChild(details);
-    }
-  }
+  renderFieldData(fieldData);
+  renderPortalData(relatedData);
 
   rawJson.textContent = JSON.stringify(payload, null, 2);
   setStatus(`Loaded record ${record.recordId || ''}.`);
@@ -272,7 +255,32 @@ function revealRecordViewer() {
   setElementsVisible(recordViewerContent, true);
 }
 
-function renderFieldTable(fieldData) {
+function renderFieldData(fieldData) {
+  const fieldKeys = Object.keys(fieldData);
+  if (!fieldKeys.length) {
+    fieldCellRefs.clear();
+    fieldDataContainer.replaceChildren(createEmptyMessage('No field data.'));
+    return;
+  }
+
+  if (!hasMatchingFieldCells(fieldKeys)) {
+    buildFieldTable(fieldData, fieldKeys);
+    return;
+  }
+
+  updateFieldCells(fieldData, fieldKeys);
+}
+
+function hasMatchingFieldCells(fieldKeys) {
+  return fieldCellRefs.size === fieldKeys.length && fieldKeys.every((fieldKey) => fieldCellRefs.has(fieldKey));
+}
+
+function buildFieldTable(fieldData, fieldKeys) {
+  fieldCellRefs.clear();
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'table-scroll-wrapper';
+
   const table = document.createElement('table');
 
   const thead = document.createElement('thead');
@@ -295,7 +303,7 @@ function renderFieldTable(fieldData) {
 
   const tbody = document.createElement('tbody');
 
-  for (const [field, value] of Object.entries(fieldData)) {
+  for (const field of fieldKeys) {
     const row = document.createElement('tr');
 
     const fieldCell = document.createElement('td');
@@ -303,15 +311,15 @@ function renderFieldTable(fieldData) {
     row.appendChild(fieldCell);
 
     const valueCell = document.createElement('td');
-    valueCell.textContent = toText(value);
+    valueCell.textContent = toText(fieldData[field]);
+    fieldCellRefs.set(field, valueCell);
     row.appendChild(valueCell);
 
     const copyCell = document.createElement('td');
     const copyButton = document.createElement('button');
     copyButton.textContent = 'Copy';
     copyButton.addEventListener('click', async () => {
-      const text = toText(value);
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(valueCell.textContent || '');
       setStatus(`Copied ${field}.`);
     });
     copyCell.appendChild(copyButton);
@@ -321,7 +329,72 @@ function renderFieldTable(fieldData) {
   }
 
   table.appendChild(tbody);
-  return table;
+  wrapper.appendChild(table);
+  fieldDataContainer.replaceChildren(wrapper);
+}
+
+function updateFieldCells(fieldData, fieldKeys) {
+  fieldKeys.forEach((fieldKey) => {
+    const cell = fieldCellRefs.get(fieldKey);
+    const nextValue = toText(fieldData[fieldKey]);
+    if (cell && cell.textContent !== nextValue) {
+      cell.textContent = nextValue;
+    }
+  });
+}
+
+function renderPortalData(relatedData) {
+  const portalKeys = Object.keys(relatedData);
+  if (!portalKeys.length) {
+    portalSectionRefs.clear();
+    relatedDataContainer.replaceChildren(createEmptyMessage('No related rows.'));
+    return;
+  }
+
+  if (!hasMatchingPortalSections(portalKeys)) {
+    buildPortalSections(relatedData, portalKeys);
+    return;
+  }
+
+  updatePortalSections(relatedData, portalKeys);
+}
+
+function hasMatchingPortalSections(portalKeys) {
+  return portalSectionRefs.size === portalKeys.length && portalKeys.every((portalKey) => portalSectionRefs.has(portalKey));
+}
+
+function buildPortalSections(relatedData, portalKeys) {
+  portalSectionRefs.clear();
+  relatedDataContainer.replaceChildren();
+
+  portalKeys.forEach((portalKey) => {
+    const details = document.createElement('details');
+    details.className = 'related-block';
+
+    const summary = document.createElement('summary');
+    details.appendChild(summary);
+
+    const content = renderRelatedRows(Array.isArray(relatedData[portalKey]) ? relatedData[portalKey] : []);
+    details.appendChild(content);
+
+    portalSectionRefs.set(portalKey, { details, summary, content });
+    relatedDataContainer.appendChild(details);
+  });
+
+  updatePortalSections(relatedData, portalKeys);
+}
+
+function updatePortalSections(relatedData, portalKeys) {
+  portalKeys.forEach((portalKey) => {
+    const section = portalSectionRefs.get(portalKey);
+    if (!section) {
+      return;
+    }
+
+    const entries = Array.isArray(relatedData[portalKey]) ? relatedData[portalKey] : [];
+    section.summary.textContent = `${portalKey} (${entries.length})`;
+    section.content.textContent = entries.length ? JSON.stringify(entries, null, 2) : 'No related rows.';
+  });
 }
 
 function renderRelatedRows(rows) {
@@ -356,6 +429,13 @@ function toText(value) {
 function setStatus(message, isError = false) {
   status.textContent = message;
   status.classList.toggle('error', isError);
+}
+
+function createEmptyMessage(message) {
+  const empty = document.createElement('p');
+  empty.className = 'empty';
+  empty.textContent = message;
+  return empty;
 }
 
 vscode.postMessage({ type: 'ready' });

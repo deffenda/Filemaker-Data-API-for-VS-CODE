@@ -323,7 +323,7 @@ export class RecordViewerPanel {
         <button id="loadButton">Load Record</button>
         <button id="exportButton">Export Record JSON</button>
       </div>
-      <p id="status" class="status"></p>
+      <p id="status" class="status" role="status" aria-live="polite"></p>
     </section>
 
     <section class="panel">

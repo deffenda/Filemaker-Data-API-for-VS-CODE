@@ -353,6 +353,9 @@ function showEmptyFieldEditor() {
 function buildFieldEditor(keys) {
   fieldInputs.clear();
 
+  const wrapper = document.createElement('div');
+  wrapper.className = 'table-scroll-wrapper';
+
   const table = document.createElement('table');
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
@@ -389,7 +392,8 @@ function buildFieldEditor(keys) {
   }
 
   table.appendChild(tbody);
-  fieldEditor.replaceChildren(table);
+  wrapper.appendChild(table);
+  fieldEditor.replaceChildren(wrapper);
 }
 
 function updateFieldEditorValues(keys) {

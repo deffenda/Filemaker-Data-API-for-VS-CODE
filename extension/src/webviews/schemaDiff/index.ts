@@ -123,7 +123,7 @@ export class SchemaDiffPanel {
     <header>
       <h1>FileMaker Schema Diff</h1>
       <p id="meta"></p>
-      <div class="summary" id="summary"></div>
+      <div class="summary" id="summary" role="status" aria-live="polite"></div>
       <div class="actions">
         <button id="exportButton">Export Diff JSON</button>
       </div>

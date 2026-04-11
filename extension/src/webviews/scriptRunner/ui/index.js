@@ -131,26 +131,25 @@ function applyInit(payload) {
 }
 
 function renderProfiles() {
-  profileSelect.innerHTML = '';
-
-  if (state.profiles.length === 0) {
-    const option = document.createElement('option');
-    option.value = '';
-    option.textContent = 'No profiles configured';
-    profileSelect.appendChild(option);
+  if (
+    !syncSelectOptions(
+      profileSelect,
+      state.profiles,
+      (profile) => profile.id,
+      (profile) => `${profile.name} (${profile.database})`,
+      'No profiles configured'
+    )
+  ) {
     return;
-  }
-
-  for (const profile of state.profiles) {
-    const option = document.createElement('option');
-    option.value = profile.id;
-    option.textContent = `${profile.name} (${profile.database})`;
-    profileSelect.appendChild(option);
   }
 
   let selectedProfileId = state.defaults && state.defaults.profileId;
   if (!selectedProfileId) {
     selectedProfileId = state.activeProfileId || state.profiles[0].id;
+  }
+
+  if (!state.profiles.some((profile) => profile.id === selectedProfileId)) {
+    selectedProfileId = state.profiles[0].id;
   }
 
   profileSelect.value = selectedProfileId;
@@ -189,26 +188,24 @@ function applyLayouts(payload) {
 }
 
 function renderLayouts(layouts, preferredLayout) {
-  layoutSelect.innerHTML = '';
-
-  if (!Array.isArray(layouts) || layouts.length === 0) {
-    const option = document.createElement('option');
-    option.value = '';
-    option.textContent = 'No layouts available';
-    layoutSelect.appendChild(option);
+  if (
+    !syncSelectOptions(
+      layoutSelect,
+      Array.isArray(layouts) ? layouts : [],
+      (layout) => layout,
+      (layout) => layout,
+      'No layouts available'
+    )
+  ) {
     return;
-  }
-
-  for (const layout of layouts) {
-    const option = document.createElement('option');
-    option.value = layout;
-    option.textContent = layout;
-    layoutSelect.appendChild(option);
   }
 
   if (preferredLayout && layouts.includes(preferredLayout)) {
     layoutSelect.value = preferredLayout;
-  } else {
+    return;
+  }
+
+  if (!layouts.includes(layoutSelect.value)) {
     layoutSelect.value = layouts[0];
   }
 }
@@ -253,6 +250,40 @@ function createLoadingSkeleton(widths) {
   });
 
   return skeleton;
+}
+
+function syncSelectOptions(select, items, getValue, getLabel, emptyLabel) {
+  if (!Array.isArray(items) || items.length === 0) {
+    const option = document.createElement('option');
+    option.value = '';
+    option.textContent = emptyLabel;
+    select.replaceChildren(option);
+    return false;
+  }
+
+  const existingOptions = new Map(Array.from(select.options).map((option) => [option.value, option]));
+
+  items.forEach((item, index) => {
+    const value = getValue(item);
+    const label = getLabel(item);
+    let option = existingOptions.get(value);
+
+    if (!option) {
+      option = document.createElement('option');
+      option.value = value;
+    }
+
+    option.textContent = label;
+
+    if (select.children[index] !== option) {
+      select.insertBefore(option, select.children[index] || null);
+    }
+
+    existingOptions.delete(value);
+  });
+
+  existingOptions.forEach((option) => option.remove());
+  return true;
 }
 
 function setElementsVisible(elements, isVisible) {

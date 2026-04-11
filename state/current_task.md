@@ -33,4 +33,4 @@ execution_lease_expires_at:
 
 ## Next action
 
-Review the updated Task 2 pull request; CI is green and the stale review threads are resolved.
+Blocked on local validation: `npm run typecheck -w extension` cannot resolve `zod`.

@@ -436,12 +436,12 @@ export class ScriptRunnerPanel {
         <button id="copyCurlButton">Copy as curl</button>
         <button id="copyFetchButton">Copy as fetch()</button>
       </div>
-      <p id="status" class="status"></p>
+      <p id="status" class="status" role="status" aria-live="polite"></p>
     </section>
 
     <section class="panel">
       <h2>Result</h2>
-      <div id="summary" class="summary">No script run yet.</div>
+      <div id="summary" class="summary" role="status" aria-live="polite">No script run yet.</div>
       <pre id="rawResult" class="raw"></pre>
     </section>
   </div>

@@ -656,7 +656,7 @@
     "package:check": "vsce package --allow-missing-repository --baseContentUrl https://example.com/your-org/filemaker-data-api-tools/blob/main --baseImagesUrl https://example.com/your-org/filemaker-data-api-tools/raw/main"
   },
   "dependencies": {
-    "axios": "1.13.6",
+    "axios": "1.15.0",
     "zod": "3.24.2"
   },
   "devDependencies": {

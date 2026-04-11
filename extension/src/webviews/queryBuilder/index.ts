@@ -763,12 +763,12 @@ export class QueryBuilderPanel {
         <button id="refreshHistoryButton">Refresh History</button>
         <label class="toggle"><input id="rawToggle" type="checkbox" /> Raw JSON</label>
       </div>
-      <p id="status" class="status"></p>
+      <p id="status" class="status" role="status" aria-live="polite"></p>
     </section>
 
     <section class="panel">
       <h2>Results</h2>
-      <div id="resultSummary" class="summary"></div>
+      <div id="resultSummary" class="summary" role="status" aria-live="polite"></div>
       <div id="tableContainer" class="table-wrap"></div>
       <pre id="rawContainer" class="raw hidden"></pre>
     </section>

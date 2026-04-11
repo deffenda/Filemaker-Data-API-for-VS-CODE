@@ -16,12 +16,13 @@ body {
   background: radial-gradient(circle at 15% 10%, #d9eaff 0%, var(--bg) 34%);
   color: var(--text);
   font-family: 'Avenir Next', 'Segoe UI', sans-serif;
+  font-size: clamp(0.8rem, 0.85rem + 0.1vw, 0.95rem);
 }
 
 .container {
-  max-width: 1200px;
+  max-width: min(1200px, 95vw);
   margin: 0 auto;
-  padding: 16px;
+  padding: clamp(12px, 2vw, 24px);
   display: grid;
   gap: 16px;
 }
@@ -31,12 +32,13 @@ header {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 12px;
+  padding: clamp(12px, 2vw, 24px);
 }
 
 h1,
 h2 {
   margin: 0 0 8px;
+  font-size: clamp(1.1rem, 1.2rem + 0.15vw, 1.5rem);
 }
 
 p {
@@ -51,6 +53,15 @@ p {
 
 .actions {
   margin-top: 12px;
+}
+
+.diff-section {
+  opacity: 0;
+  transition: opacity 0.15s ease-in;
+}
+
+.diff-section.loaded {
+  opacity: 1;
 }
 
 .loading-skeleton {
@@ -112,13 +123,18 @@ table {
   border-collapse: collapse;
 }
 
+.table-scroll-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
 th,
 td {
   border-bottom: 1px solid var(--border);
   text-align: left;
   padding: 8px;
   font-family: 'SF Mono', Menlo, monospace;
-  font-size: 0.9rem;
+  font-size: clamp(0.8rem, 0.85rem + 0.1vw, 0.95rem);
 }
 
 .empty {

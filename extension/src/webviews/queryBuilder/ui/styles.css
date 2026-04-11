@@ -16,21 +16,22 @@
 body {
   margin: 0;
   font-family: 'Avenir Next', 'Segoe UI', sans-serif;
+  font-size: clamp(0.8rem, 0.85rem + 0.1vw, 0.95rem);
   background: radial-gradient(circle at top right, #d9f3ef 0%, var(--bg) 50%);
   color: var(--text);
 }
 
 .container {
-  max-width: 1200px;
+  max-width: min(1200px, 95vw);
   margin: 0 auto;
-  padding: 18px;
+  padding: clamp(12px, 2vw, 24px);
   display: grid;
   gap: 16px;
 }
 
 .header h1 {
   margin: 0;
-  font-size: 1.35rem;
+  font-size: clamp(1.1rem, 1.2rem + 0.15vw, 1.5rem);
 }
 
 .header p {
@@ -42,7 +43,7 @@ body {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 14px;
+  padding: clamp(12px, 2vw, 24px);
 }
 
 .row,
@@ -56,7 +57,7 @@ body {
 
 label {
   color: var(--muted);
-  font-size: 0.88rem;
+  font-size: clamp(0.8rem, 0.85rem + 0.1vw, 0.95rem);
 }
 
 select,
@@ -66,7 +67,7 @@ input {
   border-radius: 8px;
   padding: 8px 10px;
   font-family: 'SF Mono', Menlo, monospace;
-  font-size: 0.9rem;
+  font-size: clamp(0.8rem, 0.85rem + 0.1vw, 0.95rem);
   background: #fff;
 }
 
@@ -136,7 +137,12 @@ button:hover {
 }
 
 .table-wrap {
-  overflow: auto;
+  overflow: visible;
+}
+
+.table-scroll-wrapper {
+  width: 100%;
+  overflow-x: auto;
 }
 
 .virtual-wrap {
@@ -148,7 +154,6 @@ button:hover {
 table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 600px;
 }
 
 th,
@@ -156,7 +161,7 @@ td {
   border: 1px solid var(--border);
   text-align: left;
   padding: 6px 8px;
-  font-size: 0.86rem;
+  font-size: clamp(0.8rem, 0.85rem + 0.1vw, 0.95rem);
 }
 
 th {

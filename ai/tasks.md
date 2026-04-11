@@ -116,6 +116,8 @@
 
 ### Phase 1C: Fix queryBuilder flickering — targeted updates and scroll fix
 
+### Part A — Fix queryBuilder flickering
+
 1. Read `src/webviews/queryBuilder/ui/index.js` fully.
 
 2. Fix profile and layout select rebuilds:
@@ -142,7 +144,7 @@
 
 5. For the results table (non-virtualized path for < 50 rows), replace `innerHTML = ''` with targeted row updates where possible.
 
-6. Run `npm run lint` — must pass.
+### Part B — Fix remaining webview flickering
 
 ### Phase 1D: Fix remaining webview flickering — recordViewer, scriptRunner, schemaDiff
 
@@ -153,11 +155,11 @@
    - On first record load, build the field table and store cell references. On subsequent loads, update cell text content.
    - For portal data, only rebuild the portal section if the portal keys have changed. Otherwise update values in place.
 
-3. **scriptRunner/ui/index.js:**
+8. **scriptRunner/ui/index.js:**
    - Replace profile select `innerHTML = ''` rebuild with diff-based update (add new options, remove stale, preserve selection).
    - Result display area can still use innerHTML since it only updates on explicit "Run" action (not continuous).
 
-4. **schemaDiff/ui/index.js:**
+9. **schemaDiff/ui/index.js:**
    - The `renderSimpleTable` and `renderChanged` functions clear containers with `innerHTML = ''`. Since schema diffs are loaded once (not continuously updated), this is acceptable. Add a fade-in CSS transition instead:
      ```css
      .diff-section { opacity: 0; transition: opacity 0.15s ease-in; }
@@ -165,7 +167,20 @@
      ```
    - After populating the container, add the `loaded` class.
 
-5. Run `npm run lint` — must pass.
+### Part C — Responsive CSS and ARIA across all webviews
+
+10. In each `styles.css`:
+    - Replace `.container { max-width: 1200px; }` with `.container { max-width: min(1200px, 95vw); }` (the max-width value varies per file — some use 1100px).
+    - Replace fixed font sizes with clamp: `font-size: clamp(0.8rem, 0.85rem + 0.1vw, 0.95rem);` for body text, `font-size: clamp(1.1rem, 1.2rem + 0.15vw, 1.5rem);` for headings.
+    - Remove any `min-width` on tables. Wrap tables in a `<div class="table-scroll-wrapper">` with `overflow-x: auto;`.
+    - Add fluid padding: replace fixed `padding: 18px;` with `padding: clamp(12px, 2vw, 24px);`.
+
+11. In each webview controller `index.ts` (in the HTML template method):
+    - Add `aria-live="polite"` to the status/message container element.
+    - Add `role="status"` to status message areas.
+    - Add `role="table"` and appropriate `role="row"`, `role="cell"` if tables are built with `<div>` elements (if they use `<table>` elements, these are implicit).
+
+12. Run `npm run lint` and `npm run typecheck` — must pass.
 
 ### Phase 1E: Responsive CSS improvements across all webviews
 
@@ -233,7 +248,7 @@ coverage: {
 
 5. In `.github/workflows/ci.yml`, change the test step from `npm test` to `npm run test:coverage`.
 
-6. Run `npm run lint` and `npm run typecheck` — must pass.
+### Part B — ProxyClient unit tests
 
 ### Phase 2B: Add ProxyClient unit tests
 
@@ -250,9 +265,50 @@ coverage: {
    - `editRecord()` — success path, validation error
    - `runScript()` — success path
 
-4. For each test: mock the proxy endpoint URL, assert the correct HTTP method and path, assert the response is correctly mapped.
+### Part C — Command handler tests
 
-5. Run `npm test` — all tests must pass.
+9. Read `src/commands/index.ts` fully (focus on addConnectionProfile, editConnectionProfile, removeConnectionProfile, connect, disconnect handlers).
+
+10. Create `test/unit/commands/core.test.ts`:
+    - Mock `vscode.window.showInputBox`, `showQuickPick`, `showWarningMessage`, ProfileStore, SecretStore, FMClient with `vi.fn()` methods.
+    - Test: `addConnectionProfile` (profileStore.add called with validated input), `editConnectionProfile` (showQuickPick called, profileStore.update called), `removeConnectionProfile` (confirmation shown, profileStore.remove called), `connect` (FMClient session created), `disconnect` (FMClient session closed).
+
+11. Read batch.ts, recordEdit.ts, savedQueries.ts, schema.ts, schemaSnapshots.ts, scriptRunner.ts, typeGen.ts, enterprise.ts in `src/commands/`.
+
+12. Create `test/unit/commands/data.test.ts`:
+    - Test runFindJson, getRecordById, openQueryBuilder, openRecordViewer, openRecordEditor.
+
+13. Create `test/unit/commands/features.test.ts`:
+    - Test batch export, saved query run, schema snapshot capture, type generation, and role guard enforcement (mock role as 'viewer', verify write commands are blocked).
+
+### Part D — Webview HTML snapshot tests
+
+14. Read each webview controller's `index.ts` to find the HTML generation method.
+
+15. Create `test/unit/webviews/htmlSnapshots.test.ts`:
+    - For each webview, extract or call the HTML generation with mocked VS Code webview/URI objects.
+    - Use `expect(html).toMatchSnapshot()` to create a baseline.
+    - Assert: CSP header present, nonce in script/style tags, required DOM elements exist by ID, no inline event handlers.
+    - Webviews to cover: queryBuilder, recordEditor, recordViewer, scriptRunner, schemaDiff, environmentCompare.
+
+### Part E — Tree view and utility tests
+
+16. Read `src/views/fmExplorer.ts` fully.
+
+17. Create `test/unit/views/fmExplorer.test.ts`:
+    - Mock: ProfileStore, FMClient, SchemaSnapshotStore, SavedQueriesStore, JobRunner, EnvironmentSetStore.
+    - Test tree structure: getChildren(undefined) returns profile root nodes, getChildren(profileNode) returns layout group / saved queries group / snapshots group, getChildren(layoutGroupNode) returns layout items, each tree item has correct label/contextValue/collapsibleState/iconPath.
+    - Test refresh(): fires the `onDidChangeTreeData` event.
+
+18. Read `src/utils/errorUx.ts`, `src/utils/hash.ts`, `src/utils/jsonlWriter.ts`, `src/webviews/common/csp.ts`.
+
+19. Create utility tests:
+    - `test/unit/errorUx.test.ts`: test that `showCommandError` calls `vscode.window.showErrorMessage` with correct format, test the "Details" action opens a JSON document.
+    - `test/unit/hash.test.ts`: test deterministic hashing of metadata objects, test empty input handling.
+    - `test/unit/jsonlWriter.test.ts`: test writing multiple records to JSONL format, test special character escaping, test empty array.
+    - `test/unit/csp.test.ts`: test `createNonce()` returns 32-char alphanumeric string, test `buildWebviewCsp()` includes correct directives, test nonce is embedded in policy string.
+
+20. Run `npm test` — all tests must pass.
 
 ### Phase 2C: Add command handler tests — core profile and connection commands
 
@@ -429,7 +485,7 @@ export interface DataApiDeleteRecordResponse {
 }
 ```
 
-3. Run `npm run lint` and `npm run typecheck` — must pass.
+### Part B — FMClient and ProxyClient methods
 
 ### Phase 3B/3C: Add createRecord and deleteRecord to FMClient and ProxyClient
 
@@ -443,7 +499,7 @@ export interface DataApiDeleteRecordResponse {
    - Record history (operation: `'createRecord'`) and metrics
    - Return `{ recordId, modId, messages, response }` from envelope
 
-3. Add `deleteRecord` to FMClient:
+5. Add `deleteRecord` to FMClient:
    - Signature: `async deleteRecord(profile: ConnectionProfile, layout: string, recordId: string, control?: ClientRequestControl): Promise<DeleteRecordResult>`
    - Validate recordId is non-empty string (throw FMClientError if empty)
    - DELETE to `layouts/${encodeURIComponent(layout)}/records/${encodeURIComponent(recordId)}`
@@ -451,9 +507,9 @@ export interface DataApiDeleteRecordResponse {
    - Record history (operation: `'deleteRecord'`) and metrics
    - Return `{ messages, response }` from envelope
 
-4. Read `src/services/proxyClient.ts` — add proxy passthrough methods for both, following existing editRecord pattern.
+6. Read `src/services/proxyClient.ts` — add proxy passthrough methods for both, following the existing editRecord pattern.
 
-5. Run `npm run lint` and `npm run typecheck` — must pass.
+7. Run `npm run lint` and `npm run typecheck` — must pass.
 
 ### Phase 3D: Integration tests for createRecord and deleteRecord
 
@@ -466,13 +522,36 @@ export interface DataApiDeleteRecordResponse {
    - Test validation: empty fieldData throws FMClientError
    - Test 401 retry: first call returns 401, re-auth, second call succeeds
 
-3. `deleteRecord.integration.test.ts`:
-   - Mock DELETE to `/fmi/data/vLatest/databases/{db}/layouts/{layout}/records/42` returning `{ response: {}, messages: [{ code: "0", message: "OK" }] }`
-   - Test success: assert result.messages present
-   - Test validation: empty recordId throws FMClientError
-   - Test 404: mock 404 response, assert appropriate error
+10. Create `test/integration/deleteRecord.integration.test.ts`:
+    - Mock DELETE to `/fmi/data/vLatest/databases/{db}/layouts/{layout}/records/42` returning `{ response: {}, messages: [{ code: "0", message: "OK" }] }`
+    - Test success: assert result.messages present
+    - Test validation: empty recordId throws FMClientError
+    - Test 404: mock 404 response, assert appropriate error
 
-4. Run `npm test` — all tests must pass.
+11. Run `npm test` — all tests must pass.
+
+### Part D — Commands, RecordEditor create mode, explorer menus
+
+12. In `package.json`:
+    - Add commands: `filemakerDataApiTools.createRecord` ("FileMaker: Create Record"), `filemakerDataApiTools.deleteRecord` ("FileMaker: Delete Record")
+    - Add both to `activationEvents`
+    - Add context menu items under `contributes.menus.view/item/context`: Create Record on layout nodes, Delete Record if record-level context exists
+
+13. In `src/commands/index.ts`:
+    - Register `createRecord`: pick profile -> pick layout -> open RecordEditor in create mode
+    - Register `deleteRecord`: accept (layout, recordId) or prompt -> show warning confirmation -> call fmClient.deleteRecord -> show result
+    - Apply role guard: viewer blocked from both
+    - Apply workspace trust: delete blocked in untrusted workspaces
+
+14. In `src/webviews/recordEditor/index.ts`:
+    - Add `mode: 'edit' | 'create'` parameter to `createOrShow` (default `'edit'`)
+    - In create mode: title = "Create Record — {layout}", empty field data, no recordId
+    - On save in create mode: call `fmClient.createRecord` instead of `editRecord`
+    - On success: show info message with recordId
+
+15. In `src/views/fmExplorer.ts`: verify layout nodes have correct `contextValue` for menu binding.
+
+16. Run `npm run lint`, `npm run typecheck`, `npm test` — all must pass.
 
 ### Phase 3E: Register commands, wire RecordEditor create mode, explorer menus
 

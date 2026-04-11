@@ -10,6 +10,10 @@ const diffSections = Array.from(document.querySelectorAll('.container > section'
 const diffSkeleton = createLoadingSkeleton(['short', 'medium', 'long', 'medium']);
 let diffReady = false;
 
+diffSections.forEach((section) => {
+  section.classList.add('diff-section');
+});
+
 const diffHeader = document.querySelector('.container > header');
 if (diffHeader && diffSections.length > 0) {
   diffHeader.insertAdjacentElement('afterend', diffSkeleton);
@@ -37,44 +41,68 @@ function renderDiff(diff) {
   renderSimpleTable(added, diff.added || []);
   renderSimpleTable(removed, diff.removed || []);
   renderChanged(changed, diff.changed || []);
+
+  diffSections.forEach((section) => {
+    section.classList.remove('loaded');
+  });
+
+  requestAnimationFrame(() => {
+    diffSections.forEach((section) => {
+      section.classList.add('loaded');
+    });
+  });
 }
 
 function renderSimpleTable(container, rows) {
   if (!rows.length) {
-    container.innerHTML = '<p class="empty">None</p>';
+    container.replaceChildren(createEmptyMessage('None'));
     return;
   }
 
-  const table = document.createElement('table');
-  table.innerHTML = `
-    <thead>
-      <tr><th>Field</th><th>Type</th><th>Repetitions</th></tr>
-    </thead>
-    <tbody></tbody>
-  `;
+  const wrapper = document.createElement('div');
+  wrapper.className = 'table-scroll-wrapper';
 
-  const tbody = table.querySelector('tbody');
+  const table = document.createElement('table');
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+  ['Field', 'Type', 'Repetitions'].forEach((heading) => {
+    const th = document.createElement('th');
+    th.textContent = heading;
+    headerRow.appendChild(th);
+  });
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
   for (const row of rows) {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${escapeHtml(row.name || '')}</td><td>${escapeHtml(row.type || row.result || '')}</td><td>${escapeHtml(String(row.repetitions ?? ''))}</td>`;
+    [row.name || '', row.type || row.result || '', String(row.repetitions ?? '')].forEach((value) => {
+      const td = document.createElement('td');
+      td.textContent = value;
+      tr.appendChild(td);
+    });
     tbody.appendChild(tr);
   }
 
-  container.innerHTML = '';
-  container.appendChild(table);
+  table.appendChild(tbody);
+  wrapper.appendChild(table);
+  container.replaceChildren(wrapper);
 }
 
 function renderChanged(container, rows) {
   if (!rows.length) {
-    container.innerHTML = '<p class="empty">None</p>';
+    container.replaceChildren(createEmptyMessage('None'));
     return;
   }
 
-  container.innerHTML = '';
+  container.replaceChildren();
   for (const item of rows) {
     const block = document.createElement('details');
     block.className = 'changed-item';
-    block.innerHTML = `<summary>${escapeHtml(item.fieldName)} (${item.changes.length} changes)</summary>`;
+
+    const summaryLine = document.createElement('summary');
+    summaryLine.textContent = `${item.fieldName} (${item.changes.length} changes)`;
+    block.appendChild(summaryLine);
 
     const list = document.createElement('ul');
     for (const change of item.changes) {
@@ -118,13 +146,11 @@ function revealDiff() {
   setElementsVisible(diffSections, true);
 }
 
-function escapeHtml(value) {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');
+function createEmptyMessage(message) {
+  const empty = document.createElement('p');
+  empty.className = 'empty';
+  empty.textContent = message;
+  return empty;
 }
 
 vscode.postMessage({ type: 'ready' });

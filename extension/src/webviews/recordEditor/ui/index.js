@@ -1,5 +1,20 @@
 const vscode = acquireVsCodeApi();
 
+function debounce(fn, ms) {
+  let timer;
+  function wrapped(...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), ms);
+  }
+
+  wrapped.cancel = () => {
+    clearTimeout(timer);
+    timer = undefined;
+  };
+
+  return wrapped;
+}
+
 const state = {
   profiles: [],
   activeProfileId: undefined,
@@ -23,12 +38,14 @@ const statusEl = document.getElementById('status');
 const fieldEditor = document.getElementById('fieldEditor');
 const patchPreview = document.getElementById('patchPreview');
 const rawRecord = document.getElementById('rawRecord');
+const fieldInputs = new Map();
 const recordEditorPanel = fieldEditor.closest('.panel');
 const recordEditorHeading = recordEditorPanel ? recordEditorPanel.querySelector('h2') : null;
 const recordEditorContent = recordEditorPanel
   ? Array.from(recordEditorPanel.children).filter((element) => element.tagName !== 'H2')
   : [fieldEditor, patchPreview, rawRecord];
 const recordEditorSkeleton = createLoadingSkeleton(['short', 'long', 'medium', 'long']);
+const debouncedMarkDirtyState = debounce(markDirtyState, 200);
 let recordEditorReady = false;
 
 if (recordEditorPanel) {
@@ -116,6 +133,7 @@ saveButton.addEventListener('click', () => {
     return;
   }
 
+  debouncedMarkDirtyState.cancel();
   vscode.postMessage({ type: 'saveRecord', payload });
   setStatus('Saving...');
 });
@@ -125,6 +143,7 @@ discardButton.addEventListener('click', () => {
     return;
   }
 
+  debouncedMarkDirtyState.cancel();
   state.draftFieldData = { ...state.originalFieldData };
   renderFieldEditor();
   setStatus('Draft changes discarded.');
@@ -160,6 +179,7 @@ function applyRecord(payload) {
     return;
   }
 
+  debouncedMarkDirtyState.cancel();
   state.loaded = payload;
   state.originalFieldData = clone(payload.record.fieldData);
   state.draftFieldData = clone(payload.record.fieldData);
@@ -197,6 +217,7 @@ function applySaved(payload) {
     return;
   }
 
+  debouncedMarkDirtyState.cancel();
   state.originalFieldData = clone(payload.record.fieldData);
   state.draftFieldData = clone(payload.record.fieldData);
   rawRecord.textContent = JSON.stringify(payload.record, null, 2);
@@ -303,23 +324,52 @@ function loadLayouts(profileId, preferredLayout) {
 }
 
 function renderFieldEditor() {
-  fieldEditor.innerHTML = '';
-
   const keys = Object.keys(state.draftFieldData).sort((a, b) => a.localeCompare(b));
   if (!keys.length) {
-    fieldEditor.innerHTML = '<p class="empty">No fieldData available.</p>';
+    showEmptyFieldEditor();
     return;
   }
 
-  const table = document.createElement('table');
-  table.innerHTML = `
-    <thead>
-      <tr><th>Field</th><th>Value</th></tr>
-    </thead>
-    <tbody></tbody>
-  `;
+  if (!hasMatchingFieldInputs(keys)) {
+    buildFieldEditor(keys);
+    return;
+  }
 
-  const tbody = table.querySelector('tbody');
+  updateFieldEditorValues(keys);
+}
+
+function hasMatchingFieldInputs(keys) {
+  return fieldInputs.size === keys.length && keys.every((key) => fieldInputs.has(key));
+}
+
+function showEmptyFieldEditor() {
+  fieldInputs.clear();
+  const empty = document.createElement('p');
+  empty.className = 'empty';
+  empty.textContent = 'No fieldData available.';
+  fieldEditor.replaceChildren(empty);
+}
+
+function buildFieldEditor(keys) {
+  fieldInputs.clear();
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'table-scroll-wrapper';
+
+  const table = document.createElement('table');
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+  const fieldHeader = document.createElement('th');
+  fieldHeader.textContent = 'Field';
+  headerRow.appendChild(fieldHeader);
+
+  const valueHeader = document.createElement('th');
+  valueHeader.textContent = 'Value';
+  headerRow.appendChild(valueHeader);
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
   for (const key of keys) {
     const tr = document.createElement('tr');
 
@@ -331,16 +381,30 @@ function renderFieldEditor() {
     const input = document.createElement('textarea');
     input.rows = 2;
     input.value = toEditableValue(state.draftFieldData[key]);
-    input.addEventListener('change', () => {
+    input.addEventListener('input', () => {
       state.draftFieldData[key] = parseEditableValue(input.value);
-      markDirtyState();
+      debouncedMarkDirtyState();
     });
+    fieldInputs.set(key, input);
     inputCell.appendChild(input);
     tr.appendChild(inputCell);
     tbody.appendChild(tr);
   }
 
-  fieldEditor.appendChild(table);
+  table.appendChild(tbody);
+  wrapper.appendChild(table);
+  fieldEditor.replaceChildren(wrapper);
+}
+
+function updateFieldEditorValues(keys) {
+  for (const key of keys) {
+    const input = fieldInputs.get(key);
+    if (!input) {
+      continue;
+    }
+
+    input.value = toEditableValue(state.draftFieldData[key]);
+  }
 }
 
 function markDirtyState() {

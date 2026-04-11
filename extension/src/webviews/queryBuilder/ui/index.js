@@ -40,6 +40,12 @@ const rawContainer = document.getElementById('rawContainer');
 const historyContainer = document.getElementById('historyContainer');
 const queryBuilderPanels = Array.from(document.querySelectorAll('.panel'));
 const queryBuilderSkeleton = createLoadingSkeleton(['short', 'long', 'medium', 'long', 'medium']);
+const standardResultTable = {
+  columnsKey: '',
+  wrapper: undefined,
+  tbody: undefined,
+  rows: new Map()
+};
 let queryBuilderReady = false;
 
 const queryBuilderHeader = document.querySelector('.header');
@@ -239,21 +245,16 @@ function applyLayouts(payload) {
 }
 
 function renderProfiles() {
-  profileSelect.innerHTML = '';
-
-  if (state.profiles.length === 0) {
-    const option = document.createElement('option');
-    option.value = '';
-    option.textContent = 'No profiles configured';
-    profileSelect.appendChild(option);
+  if (
+    !syncSelectOptions(
+      profileSelect,
+      state.profiles,
+      (profile) => profile.id,
+      (profile) => `${profile.name} (${profile.database})`,
+      'No profiles configured'
+    )
+  ) {
     return;
-  }
-
-  for (const profile of state.profiles) {
-    const option = document.createElement('option');
-    option.value = profile.id;
-    option.textContent = `${profile.name} (${profile.database})`;
-    profileSelect.appendChild(option);
   }
 
   let selectedProfileId = state.defaults && state.defaults.profileId;
@@ -261,31 +262,33 @@ function renderProfiles() {
     selectedProfileId = state.activeProfileId || state.profiles[0].id;
   }
 
+  if (!state.profiles.some((profile) => profile.id === selectedProfileId)) {
+    selectedProfileId = state.profiles[0].id;
+  }
+
   profileSelect.value = selectedProfileId;
   requestLayouts(selectedProfileId, state.defaults && state.defaults.layout);
 }
 
 function renderLayouts(layouts, preferredLayout) {
-  layoutSelect.innerHTML = '';
-
-  if (!Array.isArray(layouts) || layouts.length === 0) {
-    const option = document.createElement('option');
-    option.value = '';
-    option.textContent = 'No layouts available';
-    layoutSelect.appendChild(option);
+  if (
+    !syncSelectOptions(
+      layoutSelect,
+      Array.isArray(layouts) ? layouts : [],
+      (layout) => layout,
+      (layout) => layout,
+      'No layouts available'
+    )
+  ) {
     return;
-  }
-
-  for (const layout of layouts) {
-    const option = document.createElement('option');
-    option.value = layout;
-    option.textContent = layout;
-    layoutSelect.appendChild(option);
   }
 
   if (preferredLayout && layouts.includes(preferredLayout)) {
     layoutSelect.value = preferredLayout;
-  } else {
+    return;
+  }
+
+  if (!layouts.includes(layoutSelect.value)) {
     layoutSelect.value = layouts[0];
   }
 }
@@ -385,7 +388,7 @@ function renderQueryResult(payload) {
 function renderResultView() {
   if (!state.lastResult) {
     resultSummary.textContent = 'No results yet.';
-    tableContainer.innerHTML = '';
+    clearTableContainer();
     rawContainer.textContent = '';
     return;
   }
@@ -403,26 +406,28 @@ function renderResultView() {
 
   if (rawToggle.checked) {
     rawContainer.classList.remove('hidden');
-    tableContainer.innerHTML = '';
+    clearTableContainer();
     return;
   }
 
   rawContainer.classList.add('hidden');
 
   if (records.length === 0) {
-    tableContainer.innerHTML = '<p>No records returned.</p>';
+    clearTableContainer();
+    tableContainer.appendChild(createEmptyMessage('No records returned.'));
     return;
   }
 
   const columns = collectColumns(records);
-  tableContainer.innerHTML = '';
 
-  if (records.length > 250) {
+  if (records.length >= 50) {
+    resetStandardResultTable();
+    tableContainer.replaceChildren();
     renderVirtualizedTable(records, columns);
     return;
   }
 
-  tableContainer.appendChild(buildDataTable(records, columns));
+  renderStandardTable(records, columns);
 }
 
 function collectColumns(records) {
@@ -485,13 +490,13 @@ function applySavedQuery(query) {
 }
 
 function renderHistory() {
-  historyContainer.innerHTML = '';
-
   if (!Array.isArray(state.history) || state.history.length === 0) {
-    historyContainer.innerHTML = '<p>No history entries yet.</p>';
+    historyContainer.replaceChildren(createEmptyMessage('No history entries yet.'));
     return;
   }
 
+  const wrapper = document.createElement('div');
+  wrapper.className = 'table-scroll-wrapper';
   const table = document.createElement('table');
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
@@ -521,7 +526,8 @@ function renderHistory() {
   }
 
   table.appendChild(tbody);
-  historyContainer.appendChild(table);
+  wrapper.appendChild(table);
+  historyContainer.replaceChildren(wrapper);
 }
 
 function addCell(row, text) {
@@ -530,7 +536,95 @@ function addCell(row, text) {
   row.appendChild(td);
 }
 
-function buildDataTable(records, columns) {
+function clearTableContainer() {
+  resetStandardResultTable();
+  tableContainer.replaceChildren();
+}
+
+function createEmptyMessage(message) {
+  const empty = document.createElement('p');
+  empty.textContent = message;
+  return empty;
+}
+
+function syncSelectOptions(select, items, getValue, getLabel, emptyLabel) {
+  if (!Array.isArray(items) || items.length === 0) {
+    const option = document.createElement('option');
+    option.value = '';
+    option.textContent = emptyLabel;
+    select.replaceChildren(option);
+    return false;
+  }
+
+  const existingOptions = new Map(Array.from(select.options).map((option) => [option.value, option]));
+
+  items.forEach((item, index) => {
+    const value = getValue(item);
+    const label = getLabel(item);
+    let option = existingOptions.get(value);
+
+    if (!option) {
+      option = document.createElement('option');
+      option.value = value;
+    }
+
+    option.textContent = label;
+
+    if (select.children[index] !== option) {
+      select.insertBefore(option, select.children[index] || null);
+    }
+
+    existingOptions.delete(value);
+  });
+
+  existingOptions.forEach((option) => option.remove());
+  return true;
+}
+
+function resetStandardResultTable() {
+  standardResultTable.columnsKey = '';
+  standardResultTable.wrapper = undefined;
+  standardResultTable.tbody = undefined;
+  standardResultTable.rows.clear();
+}
+
+function renderStandardTable(records, columns) {
+  const columnsKey = columns.join('\u0000');
+  if (!standardResultTable.tbody || standardResultTable.columnsKey !== columnsKey) {
+    const tableState = buildStandardTableState(columns);
+    standardResultTable.columnsKey = columnsKey;
+    standardResultTable.wrapper = tableState.wrapper;
+    standardResultTable.tbody = tableState.tbody;
+    standardResultTable.rows.clear();
+    tableContainer.replaceChildren(tableState.wrapper);
+  } else if (standardResultTable.wrapper && tableContainer.firstElementChild !== standardResultTable.wrapper) {
+    tableContainer.replaceChildren(standardResultTable.wrapper);
+  }
+
+  const rowKeys = createStableRowKeys(records);
+  rowKeys.forEach((rowKey, index) => {
+    let rowState = standardResultTable.rows.get(rowKey);
+    if (!rowState) {
+      rowState = createResultRowState(columns);
+      standardResultTable.rows.set(rowKey, rowState);
+    }
+
+    updateResultRowState(rowState, records[index], columns);
+    standardResultTable.tbody.appendChild(rowState.row);
+  });
+
+  Array.from(standardResultTable.rows.entries()).forEach(([rowKey, rowState]) => {
+    if (!rowKeys.includes(rowKey)) {
+      rowState.row.remove();
+      standardResultTable.rows.delete(rowKey);
+    }
+  });
+}
+
+function buildStandardTableState(columns) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'table-scroll-wrapper';
+
   const table = document.createElement('table');
 
   const thead = document.createElement('thead');
@@ -550,29 +644,59 @@ function buildDataTable(records, columns) {
   table.appendChild(thead);
 
   const tbody = document.createElement('tbody');
-  for (const record of records) {
-    tbody.appendChild(buildResultRow(record, columns));
-  }
 
   table.appendChild(tbody);
-  return table;
+  wrapper.appendChild(table);
+
+  return { wrapper, tbody };
 }
 
-function buildResultRow(record, columns) {
+function createResultRowState(columns) {
   const row = document.createElement('tr');
   const idCell = document.createElement('td');
-  idCell.textContent = String(record.recordId || '');
   row.appendChild(idCell);
 
-  const fieldData = record.fieldData && typeof record.fieldData === 'object' ? record.fieldData : {};
-
+  const cells = new Map();
   for (const column of columns) {
     const td = document.createElement('td');
-    td.textContent = toCellValue(fieldData[column]);
+    cells.set(column, td);
     row.appendChild(td);
   }
 
-  return row;
+  return { row, idCell, cells };
+}
+
+function updateResultRowState(rowState, record, columns) {
+  const nextRecordId = String(record.recordId || '');
+  if (rowState.idCell.textContent !== nextRecordId) {
+    rowState.idCell.textContent = nextRecordId;
+  }
+
+  const fieldData = record.fieldData && typeof record.fieldData === 'object' ? record.fieldData : {};
+  columns.forEach((column) => {
+    const cell = rowState.cells.get(column);
+    const nextValue = toCellValue(fieldData[column]);
+    if (cell && cell.textContent !== nextValue) {
+      cell.textContent = nextValue;
+    }
+  });
+}
+
+function createStableRowKeys(records) {
+  const counts = new Map();
+  records.forEach((record) => {
+    const recordId = record && record.recordId !== undefined && record.recordId !== null ? String(record.recordId) : '';
+    counts.set(recordId, (counts.get(recordId) || 0) + 1);
+  });
+
+  return records.map((record, index) => {
+    const recordId = record && record.recordId !== undefined && record.recordId !== null ? String(record.recordId) : '';
+    if (!recordId || counts.get(recordId) > 1) {
+      return `row-${index}`;
+    }
+
+    return `record-${recordId}`;
+  });
 }
 
 function renderVirtualizedTable(records, columns) {
@@ -612,25 +736,45 @@ function renderVirtualizedTable(records, columns) {
     const start = Math.max(0, Math.floor(container.scrollTop / rowHeight) - Math.floor(buffer / 2));
     const end = Math.min(records.length, start + visibleCount);
 
-    tbody.innerHTML = '';
-
     const topSpacer = document.createElement('tr');
     topSpacer.style.height = `${start * rowHeight}px`;
-    topSpacer.innerHTML = `<td colspan=\"${columns.length + 1}\"></td>`;
-    tbody.appendChild(topSpacer);
+    const topSpacerCell = document.createElement('td');
+    topSpacerCell.colSpan = columns.length + 1;
+    topSpacer.appendChild(topSpacerCell);
+
+    const sliceRows = [topSpacer];
 
     for (let index = start; index < end; index += 1) {
-      tbody.appendChild(buildResultRow(records[index], columns));
+      const rowState = createResultRowState(columns);
+      updateResultRowState(rowState, records[index], columns);
+      sliceRows.push(rowState.row);
     }
 
     const bottomSpacer = document.createElement('tr');
     bottomSpacer.style.height = `${Math.max(0, (records.length - end) * rowHeight)}px`;
-    bottomSpacer.innerHTML = `<td colspan=\"${columns.length + 1}\"></td>`;
-    tbody.appendChild(bottomSpacer);
+    const bottomSpacerCell = document.createElement('td');
+    bottomSpacerCell.colSpan = columns.length + 1;
+    bottomSpacer.appendChild(bottomSpacerCell);
+    sliceRows.push(bottomSpacer);
+
+    tbody.replaceChildren(...sliceRows);
   };
 
-  container.addEventListener('scroll', renderSlice);
-  renderSlice();
+  let rafPending = false;
+  const scheduleRenderSlice = () => {
+    if (rafPending) {
+      return;
+    }
+
+    rafPending = true;
+    requestAnimationFrame(() => {
+      rafPending = false;
+      renderSlice();
+    });
+  };
+
+  container.addEventListener('scroll', scheduleRenderSlice);
+  scheduleRenderSlice();
 }
 
 function setStatus(message, isError = false) {

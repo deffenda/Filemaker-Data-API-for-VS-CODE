@@ -66,7 +66,7 @@
 
 ## Task 2: Fix all webview flickering and implement responsive CSS across all webviews
 
-**Status:** ready_for_codex
+**Status:** done
 **Phase:** 1B-1E
 **Depends on:** Task 1 (done, merged to main)
 **Files to modify:**
@@ -211,7 +211,7 @@
 
 ## Task 3: Test infrastructure — coverage config, ProxyClient, command handler, and webview snapshot tests
 
-**Status:** pending
+**Status:** ready_for_codex
 **Phase:** 2A-2F
 **Depends on:** none
 **Files to modify/create:**

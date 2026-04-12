@@ -13,6 +13,7 @@ interface RecordEditorOpenOptions {
   profileId?: string;
   layout?: string;
   recordId?: string;
+  mode?: 'edit' | 'create';
 }
 
 interface LoadRecordPayload {
@@ -33,6 +34,7 @@ type IncomingMessage =
   | { type: 'validateDraft'; payload: DraftPayload }
   | { type: 'previewPatch'; payload: DraftPayload }
   | { type: 'saveRecord'; payload: DraftPayload }
+  | { type: 'createRecord'; payload: { profileId: string; layout: string; fieldData: Record<string, unknown> } }
   | { type: 'exportRecord' };
 
 export class RecordEditorPanel {
@@ -81,9 +83,14 @@ export class RecordEditorPanel {
       return;
     }
 
+    const isCreateMode = defaults?.mode === 'create';
+    const panelTitle = isCreateMode && defaults?.layout
+      ? `Create Record — ${defaults.layout}`
+      : 'FileMaker Record Editor';
+
     const panel = vscode.window.createWebviewPanel(
       'filemakerRecordEditor',
-      'FileMaker Record Editor',
+      panelTitle,
       column,
       {
         enableScripts: true,
@@ -130,6 +137,9 @@ export class RecordEditorPanel {
         break;
       case 'saveRecord':
         await this.saveRecord(incoming.payload);
+        break;
+      case 'createRecord':
+        await this.handleCreateRecord(incoming.payload);
         break;
       case 'exportRecord':
         await this.exportCurrentRecord();
@@ -296,6 +306,56 @@ export class RecordEditorPanel {
     }
   }
 
+  private async handleCreateRecord(payload: {
+    profileId: string;
+    layout: string;
+    fieldData: Record<string, unknown>;
+  }): Promise<void> {
+    if (vscode.workspace.getConfiguration('filemaker').get<boolean>('offline.mode', false)) {
+      await this.postError('Offline mode is enabled; record writes are disabled.');
+      return;
+    }
+
+    const profile = await this.profileStore.getProfile(payload.profileId);
+    if (!profile) {
+      await this.postError('Selected profile was not found.');
+      return;
+    }
+
+    const nonEmptyFields = Object.fromEntries(
+      Object.entries(payload.fieldData).filter(([, v]) => v !== '' && v !== undefined && v !== null)
+    );
+
+    if (Object.keys(nonEmptyFields).length === 0) {
+      await this.postError('At least one field must have a value to create a record.');
+      return;
+    }
+
+    const confirmation = await vscode.window.showWarningMessage(
+      `Create a new record in layout "${payload.layout}" with ${Object.keys(nonEmptyFields).length} field(s)?`,
+      { modal: true },
+      'Create'
+    );
+
+    if (confirmation !== 'Create') {
+      await this.panel.webview.postMessage({ type: 'saveCancelled' });
+      return;
+    }
+
+    try {
+      const result = await this.fmClient.createRecord(profile, payload.layout, nonEmptyFields);
+
+      vscode.window.showInformationMessage(`Record created (ID: ${result.recordId}).`);
+
+      await this.panel.webview.postMessage({
+        type: 'recordCreated',
+        payload: { recordId: result.recordId, modId: result.modId }
+      });
+    } catch (error) {
+      await this.postError(formatError(error));
+    }
+  }
+
   private async exportCurrentRecord(): Promise<void> {
     if (!this.loadedRecord) {
       await this.postError('No record has been loaded.');
@@ -418,7 +478,7 @@ function parseIncomingMessage(raw: unknown): IncomingMessage | undefined {
     return { type };
   }
 
-  if (type === 'loadRecord' || type === 'validateDraft' || type === 'previewPatch' || type === 'saveRecord') {
+  if (type === 'loadRecord' || type === 'validateDraft' || type === 'previewPatch' || type === 'saveRecord' || type === 'createRecord') {
     const payload = parseDraftPayload(value.payload, type === 'loadRecord');
     if (!payload) {
       return undefined;

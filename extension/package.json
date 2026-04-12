@@ -49,6 +49,8 @@
     "onCommand:filemakerDataApiTools.openGeneratedTypesFolder",
     "onCommand:filemakerDataApiTools.openRecordEditor",
     "onCommand:filemakerDataApiTools.editRecordById",
+    "onCommand:filemakerDataApiTools.createRecord",
+    "onCommand:filemakerDataApiTools.deleteRecord",
     "onCommand:filemakerDataApiTools.batchExportFind",
     "onCommand:filemakerDataApiTools.batchUpdateFromFile",
     "onCommand:filemakerDataApiTools.showJobs",
@@ -213,6 +215,14 @@
         "title": "FileMaker: Edit Record by ID"
       },
       {
+        "command": "filemakerDataApiTools.createRecord",
+        "title": "FileMaker: Create Record"
+      },
+      {
+        "command": "filemakerDataApiTools.deleteRecord",
+        "title": "FileMaker: Delete Record"
+      },
+      {
         "command": "filemakerDataApiTools.batchExportFind",
         "title": "FileMaker: Batch Export (Find)"
       },
@@ -374,6 +384,11 @@
           "command": "filemakerDataApiTools.openRecordEditor",
           "when": "view == filemakerExplorer && viewItem == fmLayout",
           "group": "inline@4"
+        },
+        {
+          "command": "filemakerDataApiTools.createRecord",
+          "when": "view == filemakerExplorer && viewItem == fmLayout",
+          "group": "inline@5"
         },
         {
           "command": "filemakerDataApiTools.editRecordById",

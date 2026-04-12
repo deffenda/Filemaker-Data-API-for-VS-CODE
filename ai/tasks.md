@@ -4,7 +4,7 @@
 
 ## Task 1: Value list types, extraction, explorer, and Record Editor integration
 
-**Status:** ready_for_codex
+**Status:** done
 **Phase:** 1A-1C
 **Depends on:** none
 
@@ -21,7 +21,7 @@
 
 ## Task 2: Container field display and handling
 
-**Status:** pending
+**Status:** done
 **Phase:** 2A-2C
 **Depends on:** none
 

@@ -211,7 +211,7 @@
 
 ## Task 3: Test infrastructure — coverage config, ProxyClient, command handler, and webview snapshot tests
 
-**Status:** ready_for_codex
+**Status:** done
 **Phase:** 2A-2F
 **Depends on:** none
 **Files to modify/create:**
@@ -384,7 +384,7 @@ coverage: {
 
 ## Task 4: Test infrastructure — tree view and utility tests
 
-**Status:** pending
+**Status:** ready_for_codex
 **Phase:** 2G-2H
 **Depends on:** none
 **Files to create:**

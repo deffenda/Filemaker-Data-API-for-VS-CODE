@@ -1,22 +1,19 @@
 # Current Task
 
-task_id: 3
-title: Test infrastructure — coverage config, ProxyClient, command handler, and webview snapshot tests
+task_id: 4
+title: Test infrastructure — tree view and utility tests
 status: ready_for_codex
-phase: 2A-2F
+phase: 2G-2H
 depends_on: none
 
-## Files to modify/create
+## Files to create
 
-- `extension/vitest.config.ts` (coverage config)
-- `extension/package.json` (devDependency, test:coverage script)
-- `.github/workflows/ci.yml` (test:coverage in CI)
-- `extension/test/unit/proxyClient.test.ts` (new)
-- `extension/test/unit/commands/core.test.ts` (new)
-- `extension/test/unit/commands/data.test.ts` (new)
-- `extension/test/unit/commands/features.test.ts` (new)
-- `extension/test/unit/webviews/htmlSnapshots.test.ts` (new)
+- `extension/test/unit/views/fmExplorer.test.ts`
+- `extension/test/unit/errorUx.test.ts`
+- `extension/test/unit/hash.test.ts`
+- `extension/test/unit/jsonlWriter.test.ts`
+- `extension/test/unit/csp.test.ts`
 
 ## Next action
 
-Codex implements Task 3 per instructions in ai/tasks.md.
+Codex implements Task 4 per instructions in ai/tasks.md.

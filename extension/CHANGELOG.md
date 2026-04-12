@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.9.0
+
+- Global field support:
+  - Added `buildGlobalFieldsPayload()` and `parseGlobalFieldsPayload()` utilities
+  - Added `isValidGlobalFieldName()` validation
+- Compound find support:
+  - Added `buildCompoundFindQuery()` for multi-request finds with omit support
+  - Added `parseCompoundFindQuery()` for parsing query arrays back to structured rows
+  - Added `validateCompoundFind()` validation
+- Duplicate record support:
+  - Added `extractDuplicateFieldData()` and `prepareDuplicateFieldData()` utilities
+  - Added `isLikelyAutoEnterField()` heuristic for excluding auto-enter fields
+- Tests:
+  - 10 global field tests, 7 compound find tests, 6 duplicate record tests
+  - Total: 253 tests across 58 test files
+
 ## 0.8.0
 
 - Portal support:

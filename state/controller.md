@@ -1,4 +1,4 @@
 # Controller State
 
 current_state: ready_for_codex
-current_task: T-COL-1
+current_task: V1

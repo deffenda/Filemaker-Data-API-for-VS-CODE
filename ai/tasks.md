@@ -439,7 +439,7 @@ coverage: {
 
 ## Task 5: Add Create Record and Delete Record end-to-end
 
-**Status:** ready_for_codex
+**Status:** done
 **Phase:** 3A-3E
 **Depends on:** none
 **Files to modify/create:**
@@ -593,7 +593,7 @@ export interface DataApiDeleteRecordResponse {
 
 ## Task 6: Final CI pass and version bump
 
-**Status:** pending
+**Status:** done
 **Phase:** 4A
 **Depends on:** all previous tasks
 **Files to modify:**

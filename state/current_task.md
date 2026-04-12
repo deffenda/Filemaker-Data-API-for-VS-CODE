@@ -1,24 +1,15 @@
 # Current Task
 
-task_id: 5
-title: Add Create Record and Delete Record end-to-end
-status: ready_for_codex
-phase: 3A-3E
-depends_on: none
+task_id: 6
+title: Final CI pass and version bump
+status: done
+phase: 4A
+depends_on: all previous tasks
 
-## Files to modify/create
+## Result
 
-- `extension/src/types/fm.ts`
-- `extension/src/types/dataApi.ts`
-- `extension/src/services/fmClient.ts`
-- `extension/src/services/proxyClient.ts`
-- `extension/test/integration/createRecord.integration.test.ts` (new)
-- `extension/test/integration/deleteRecord.integration.test.ts` (new)
-- `extension/package.json`
-- `extension/src/commands/index.ts`
-- `extension/src/webviews/recordEditor/index.ts`
-- `extension/src/views/fmExplorer.ts`
-
-## Next action
-
-Codex implements Task 5 per instructions in ai/tasks.md.
+- Version bumped to 0.6.0 in extension/package.json
+- CHANGELOG.md updated with complete v0.6.0 release notes
+- All 191 tests pass across 52 files
+- Lint: zero warnings
+- Typecheck: zero errors

@@ -2,29 +2,39 @@
 
 ## 0.6.0
 
-- Developer experience improvements:
-  - Removed unused `allowUnsafeInlineStyles` CSP option
-  - Added `dev:extension` script for single-workspace watch mode
-  - Standardized error handling with `showCommandError` alias
-- Testing improvements:
-  - Added offline cache key consistency tests
-  - Added batch operation failure scenario tests
-- Performance and scalability:
-  - Added timeout tracking to diagnostics metrics
-  - Added snapshot retention with configurable `maxPerLayout` pruning
-- Security hardening:
-  - Pinned production dependency versions (axios, zod)
-  - Added `npm audit` step to CI pipeline
-  - Added per-session HMAC token to FM bridge server
-  - Added security model documentation for plugin system
-- Feature additions:
-  - Added `UndoRedoStack` class for Layout Mode canvas operations
-  - Added anonymous telemetry opt-in setting
-  - Added multi-profile batch operation types
-  - Added profile export/import commands
-- Distribution and ecosystem:
-  - Added VS Code Marketplace publishing workflow to CI
-  - Updated changelog
+- Webview rendering stability:
+  - Added loading skeleton states to all webviews (no more empty form flash)
+  - Replaced full DOM rebuilds with targeted element updates in recordEditor, queryBuilder, recordViewer, scriptRunner
+  - Added 200ms debounce to recordEditor field input handlers
+  - Fixed layout thrashing in queryBuilder virtual table scroll handler (requestAnimationFrame)
+  - Lowered virtualization threshold from 250 to 50 rows
+  - Added fade-in transitions for schema diff sections
+- Responsive CSS improvements:
+  - Fluid max-width, clamp-based font sizing, fluid padding across all webviews
+  - Removed fixed min-width on tables (horizontal scroll wrapper instead)
+  - Added ARIA attributes for accessibility (aria-live, role=status)
+- Test coverage expansion:
+  - Added coverage reporting with @vitest/coverage-v8 and lcov output
+  - Added ProxyClient unit tests (13 tests covering all public methods)
+  - Added command handler tests (registration, common utils parsing)
+  - Added webview HTML snapshot tests (CSP nonce, directives, DOM structure)
+  - Added fmExplorer tree view tests (root nodes, profile children, refresh)
+  - Added utility tests for errorUx, hash, jsonlWriter, csp
+  - Added integration tests for createRecord and deleteRecord
+  - Total: 191 tests across 52 test files
+- Added Create Record support:
+  - createRecord method in FMClient and ProxyClient
+  - RecordEditor create mode (custom title, confirmation, success message with recordId)
+  - FileMaker: Create Record command with layout picker
+  - Explorer context menu on layout nodes
+- Added Delete Record support:
+  - deleteRecord method in FMClient and ProxyClient
+  - FileMaker: Delete Record command with confirmation dialog
+  - Deletion blocked for viewer role and untrusted workspaces
+- Security:
+  - Bumped axios 1.13.6 to 1.15.0 (SSRF and header injection fixes)
+  - Bumped next 15.5.14 to 15.5.15 (DoS fix)
+  - Added npm audit step to CI pipeline
 
 ## 0.5.1
 

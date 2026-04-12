@@ -384,7 +384,7 @@ coverage: {
 
 ## Task 4: Test infrastructure — tree view and utility tests
 
-**Status:** ready_for_codex
+**Status:** done
 **Phase:** 2G-2H
 **Depends on:** none
 **Files to create:**
@@ -439,7 +439,7 @@ coverage: {
 
 ## Task 5: Add Create Record and Delete Record end-to-end
 
-**Status:** pending
+**Status:** ready_for_codex
 **Phase:** 3A-3E
 **Depends on:** none
 **Files to modify/create:**

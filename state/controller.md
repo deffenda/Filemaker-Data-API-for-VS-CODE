@@ -6,4 +6,4 @@ plan_file: /ai/plan.md
 tasks_file: /ai/tasks.md
 acceptance_file: /ai/acceptance.md
 last_updated: 2026-04-12
-current_task: 4
+current_task: 5

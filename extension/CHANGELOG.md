@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.7.0
+
+- Value list support:
+  - Added `ValueList` and `ValueListItem` types
+  - Added `extractValueLists()` utility for parsing layout metadata
+  - Value Lists group node in Explorer under each layout
+  - Value list items displayed with item count
+- Container field support:
+  - Added `isContainerField()` utility for field type detection
+  - Added `resolveContainerUrl()` for building full download URLs from relative paths
+  - Added `isImageContainer()` for detecting image content types
+- Tests:
+  - 7 value list parser tests (extraction, edge cases, fallbacks)
+  - 9 container field utility tests (detection, URL resolution, image detection)
+  - Total: 214 tests across 54 test files
+
 ## 0.6.0
 
 - Webview rendering stability:

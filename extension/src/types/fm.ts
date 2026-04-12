@@ -89,6 +89,16 @@ export interface FileMakerFieldMetadata {
   [key: string]: unknown;
 }
 
+export interface ValueListItem {
+  value: string;
+  displayValue: string;
+}
+
+export interface ValueList {
+  name: string;
+  values: ValueListItem[];
+}
+
 export interface SchemaMetadataResult {
   supported: boolean;
   fromCache: boolean;

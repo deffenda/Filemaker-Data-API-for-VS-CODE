@@ -1,4 +1,10 @@
 {
-    "last_updated": "2026-04-12T00:00:00Z",
-    "tasks": []
+  "last_updated": "2026-04-12T23:59:09Z",
+  "tasks": [
+    {
+      "id": "V1",
+      "status": "pending",
+      "title": "VS Code Marketplace publishing \u2014 icon, metadata, README, VSIX build\nScript Assistant \u2014 AI explains and optimizes FileMaker scripts"
+    }
+  ]
 }

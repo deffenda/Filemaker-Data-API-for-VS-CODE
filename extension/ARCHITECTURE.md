@@ -2,8 +2,7 @@
 
 ## Overview
 
-The extension is organized around service boundaries with a thin command/webview layer.  
-v0.5 focuses on cleanup and hardening: shared error normalization, shared redaction, centralized settings reads, stricter webview validation/CSP, and expanded tests.
+The extension is organized around service boundaries with a thin command/webview layer. Services handle all business logic and Data API communication. Commands and webviews are thin entry points that delegate to services.
 
 ## Module Boundaries
 
@@ -102,6 +101,24 @@ v0.5 focuses on cleanup and hardening: shared error normalization, shared redact
 
 - `src/utils/errorUx.ts`
   - command-facing error UX helper with `Details…` document
+
+- `src/utils/valueListParser.ts`
+  - value list extraction from layout metadata
+
+- `src/utils/containerFieldUtils.ts`
+  - container field detection and URL resolution
+
+- `src/utils/portalUtils.ts`
+  - portal data extraction, metadata parsing, request parameter building
+
+- `src/utils/globalFieldUtils.ts`
+  - global field payload building/parsing and validation
+
+- `src/utils/compoundFindUtils.ts`
+  - compound find query building with omit support
+
+- `src/utils/duplicateRecord.ts`
+  - duplicate record field preparation with auto-enter field filtering
 
 ## Dependency Diagram
 

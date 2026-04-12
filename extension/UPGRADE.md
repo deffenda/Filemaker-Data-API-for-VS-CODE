@@ -1,34 +1,46 @@
-# Upgrade Guide: v0.4 -> v0.5
+# Upgrade Guide
 
-v0.5 is a hardening release. No major end-user feature additions were introduced.
+## v0.9.0 to v1.0.0
 
-## What Changed
+Production release. No breaking changes.
 
-- Version bumped to `0.5.0`.
-- Shared error model and consistent command UX (`Details…` on errors).
-- Shared redaction utility applied across logging/history/error-details.
-- Centralized settings reads and validation via `settingsService`.
-- Stronger input/path validation for profile and generation flows.
-- Webview CSP/message-validation hardening.
-- Expanded test suite for error normalization/redaction/settings/message guards.
+## v0.5.1 to v0.6.0
 
-## Settings Notes
+### Webview Changes
+- All webviews now show loading skeletons instead of empty forms on load.
+- DOM updates are targeted (no more full `innerHTML` clears on state changes).
+- Field input handlers in Record Editor are debounced.
+- Virtualization threshold lowered from 250 to 50 rows in Query Builder.
 
-No required setting renames for v0.5.
+### New Commands
+- **FileMaker: Create Record** — opens Record Editor in create mode.
+- **FileMaker: Delete Record** — delete with confirmation dialog.
+- Both commands are blocked for `viewer` role and (delete) untrusted workspaces.
 
-Behavioral improvements:
-- invalid setting values are clamped/fallback to safe defaults.
-- untrusted workspace can force safer snapshot storage defaults.
+### CSS Changes
+- All webviews use fluid `max-width`, `clamp()` font sizes, and fluid padding.
+- Fixed `min-width` on tables replaced with horizontal scroll wrappers.
+- ARIA attributes added (`aria-live="polite"`, `role="status"`).
 
-## Migration Notes for Contributors
+### Testing
+- Coverage reporting configured with `@vitest/coverage-v8`.
+- CI runs `npm run test:coverage` instead of `npm test`.
+- New `test:coverage` script in `package.json`.
+
+### Dependencies
+- `axios` bumped to 1.15.0 (security fixes).
+- `next` bumped to 15.5.15 (security fix).
+- `@vitest/coverage-v8` added as devDependency.
+
+### No Required Setting Changes
+
+All existing settings continue to work unchanged.
+
+## v0.4.0 to v0.5.0
+
+Hardening release. See [CHANGELOG.md](./CHANGELOG.md) for details.
 
 - Prefer `SettingsService` for new config access.
-- Use `showErrorWithDetails`/`showCommandError` in command handlers.
+- Use `showErrorWithDetails` / `showCommandError` in command handlers.
 - Use `normalizeError` and `redact` utilities instead of local logic.
 - Use `webviews/common/csp.ts` and `webviews/common/messageValidation.ts` for new webviews.
-
-## Potentially Visible Behavior Changes
-
-- Some error messages may be slightly different due to normalized mapping.
-- Invalid profile data loaded from stored state is ignored during hydration.
-- Path traversal-like output paths now fall back to safe directories.

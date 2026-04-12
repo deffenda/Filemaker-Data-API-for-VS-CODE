@@ -1,194 +1,186 @@
-# FileMaker Data API Tools
+# FileMaker Data API Tools for VS Code
 
-`FileMaker Data API Tools` is a VS Code extension for FileMaker Data API (`fmrest`) workflows: connect, browse layouts/metadata, run finds, inspect/edit records, run scripts, compare environments, and run batch jobs.
+A free, open-source VS Code extension for working with the FileMaker Data API (`fmrest`). Connect to FileMaker servers, browse layouts and metadata, run queries, create/edit/delete records, run scripts, compare environments, and run batch jobs — all from within VS Code.
 
-Version `0.5.1` is a patch release focused on layout-folder compatibility and packaging reliability.
+No telemetry. No account required.
 
-## Patch Notes (0.5.1)
+## Install
 
-- Fixed layout discovery when FileMaker returns folder-based layout structures (`folderLayoutNames` / nested arrays).
-- Layouts inside folders (for example under an `Assets` folder) now appear correctly in:
-  - Query Builder layout picker
-  - Explorer layout tree
-  - Any command using `listLayouts`
-- Updated VSIX packaging defaults so runtime dependencies are included.
+### From VSIX
 
-## Install in VS Code
-
-### Option A: Install from VSIX (recommended for normal use)
-
-1. Download or build `filemaker-data-api-tools-0.5.1.vsix`.
+1. Download or build `filemaker-data-api-tools-1.0.0.vsix`.
 2. Open VS Code.
-3. Open Command Palette (`Cmd+Shift+P` on macOS / `Ctrl+Shift+P` on Windows/Linux).
-4. Run `Extensions: Install from VSIX...`.
-5. Select the `.vsix` file.
-6. Reload VS Code when prompted.
+3. Open Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`).
+4. Run **Extensions: Install from VSIX...** and select the file.
+5. Reload when prompted.
 
-### Option B: Run from source (for development)
+### From Source
 
 ```bash
 npm install
-npm run lint
 npm run build
 npm test
 ```
 
-1. Open this project folder in VS Code.
-2. Press `F5` to launch an Extension Development Host.
-3. In the new window, run `FileMaker: Add Connection Profile` from Command Palette.
-
-### Verify installation
-
-1. Open Command Palette and run `FileMaker: Add Connection Profile`.
-2. Open Explorer and confirm the **FileMaker Explorer** view is visible.
-3. Run `FileMaker: Open Query Builder` and verify layout selection loads.
-
-## What It Does
-
-- Connection profiles with secure secrets in VS Code `SecretStorage`
-- FileMaker Explorer tree (profiles, layouts, fields, saved queries, schema snapshots, jobs, environment sets)
-- Webviews:
-  - Query Builder
-  - Record Viewer / Record Editor
-  - Script Runner
-  - Schema Diff
-  - Environment Compare
-  - Diagnostics Dashboard
-- Data API client with token lifecycle, timeout/cancellation support, and retry-on-401
-- Offline metadata mode and schema caching
-- Batch export/update job workflows
-- Enterprise controls (roles, policy config, feature gating)
-- Plugin registry for safe extension points
-
-No telemetry is included.
-
-## Quickstart
-
-```bash
-npm install
-npm run lint
-npm run build
-npm test
-```
-
-In VS Code:
-1. Open this repository.
+1. Open this project in VS Code.
 2. Press `F5` to launch the Extension Development Host.
-3. Run `FileMaker: Add Connection Profile`.
-4. Run `FileMaker: Connect`.
-5. Run `FileMaker: Open Query Builder` and execute a find request.
+3. Run **FileMaker: Add Connection Profile** from Command Palette.
 
-## Security Model
+### Verify Installation
 
-- Passwords/tokens are stored only in `SecretStorage`.
-- No plaintext credentials are written to settings/state files.
-- Webviews do not call FileMaker endpoints directly; extension services execute all API calls.
-- Logs, diagnostics, and history use redaction and omit record body payloads where possible.
-- Copy-as snippets redact authorization headers by default.
-- Role guard + workspace trust + offline mode block unsafe write paths.
+1. Run **FileMaker: Add Connection Profile** from Command Palette.
+2. Confirm the **FileMaker Explorer** view appears in the sidebar.
+3. Run **FileMaker: Open Query Builder** and verify the layout picker loads.
+
+## Features
+
+### Records (Full CRUD)
+
+- **Find records** with JSON query syntax or the visual Query Builder
+- **Get record** by ID
+- **Create record** with field validation and confirmation
+- **Edit record** with draft preview, patch JSON, and save confirmation
+- **Delete record** with confirmation dialog (blocked for viewer role and untrusted workspaces)
+- **Duplicate record** preparation with auto-enter field filtering
+
+### Query & Search
+
+- **Query Builder** webview with layout picker, sort, limit/offset, and export (JSON, CSV)
+- **Saved Queries** with workspace/global scope, import/export, and explorer integration
+- **Compound find queries** with multiple request rows and omit support
+- **Copy as curl/fetch** with auth header redaction
+
+### Schema & Metadata
+
+- **Field metadata browser** under each layout in the explorer
+- **Value lists** extracted from layout metadata and displayed in the explorer
+- **Schema snapshots** with versioning, diffing, and drift detection
+- **Schema diff webview** with added/removed/changed field sections
+- **TypeScript type generation** from layout metadata
+- **Container field detection** and URL resolution
+
+### Scripts
+
+- **Script Runner** webview with layout/context selection and parameter input
+- Script result display and copy-as helpers
+
+### Portal & Related Records
+
+- **Portal data extraction** from records with field name parsing
+- **Portal metadata parsing** from layout info
+- **Portal-aware request parameters** with per-portal limit and offset
+
+### Batch Operations
+
+- **Batch export** with pagination (JSONL or CSV output)
+- **Batch update** from CSV/JSON with dry-run default and concurrency control
+- Job progress tracking, cancellation, and status bar integration
+
+### Global Fields
+
+- **Global field payload builder** for pre-request globals
+- **Global field parser** for reading globals from request bodies
+- Field name validation
+
+### Enterprise
+
+- **Environment sets** for grouped profile workflows
+- **Cross-environment comparison** with layout presence matrix and field-level drift
+- **Role-based access control** (viewer/developer/admin)
+- **Enterprise config** via `.vscode/filemaker.config.json`
+- **Offline metadata mode** with persistent cache
+
+### Diagnostics
+
+- **Request metrics** (latency, success/failure, re-auth, cache hits)
+- **Diagnostics dashboard** webview
+- **Request history** viewer
+- **Request tracing** with unique request IDs
+
+### Other
+
+- **Plugin registry** for safe extension points
+- **Workspace trust** integration (high-risk features disabled in untrusted workspaces)
+- **Loading skeletons** on all webviews (no empty form flash)
+- **Responsive CSS** with fluid scaling and ARIA accessibility attributes
 
 ## Connection Profiles
 
-- `Direct` mode: extension talks to FileMaker Data API directly.
-- `Proxy` mode: extension talks to your proxy endpoint (recommended for team/shared environments).
-- Supported profile fields:
-  - `serverUrl`
-  - `database`
-  - `authMode`
-  - `username` (direct mode)
-  - `apiBasePath` / `apiVersionPath`
-  - `proxyEndpoint` (proxy mode)
+Two authentication modes:
+
+- **Direct** — extension connects to the FileMaker Data API directly
+- **Proxy** — extension connects through your proxy endpoint (recommended for teams)
+
+Profile fields: `serverUrl`, `database`, `authMode`, `username` (direct), `apiBasePath`, `apiVersionPath`, `proxyEndpoint` (proxy).
+
+Passwords and API keys are stored in VS Code `SecretStorage` (platform-level encryption). No credentials are written to settings or state files.
+
+## Security
+
+- Credentials stored only in `SecretStorage`
+- Webviews never call FileMaker endpoints directly — all API calls go through extension services
+- CSP nonces on all webview scripts and styles
+- Logs, history, and diagnostics use redaction (no passwords, tokens, or record payloads)
+- Copy-as snippets redact authorization headers by default
+- Role guard + workspace trust + offline mode block unsafe write paths
+
+## Settings
+
+| Setting | Description |
+|---------|------------|
+| `filemakerDataApiTools.requestTimeoutMs` | HTTP request timeout (default 15s) |
+| `filemaker.logging.level` | Log level: debug, info, warn, error |
+| `filemaker.savedQueries.scope` | Saved queries scope: workspace or global |
+| `filemaker.schema.cacheTtlSeconds` | Metadata cache TTL |
+| `filemaker.schema.snapshots.storage` | Snapshot storage: workspaceState or workspaceFiles |
+| `filemaker.schema.diagnostics.enabled` | Publish schema diffs to Problems panel |
+| `filemaker.typegen.outputDir` | TypeScript output folder |
+| `filemaker.batch.maxRecords` | Max records for batch export |
+| `filemaker.batch.concurrency` | Batch concurrency limit |
+| `filemaker.enterprise.mode` | Enable enterprise mode |
+| `filemaker.enterprise.role` | Enterprise role: viewer, developer, admin |
+| `filemaker.performance.mode` | Performance mode: standard or high-scale |
+| `filemaker.offline.mode` | Enable offline metadata mode |
 
 ## Troubleshooting
 
-### HTTP 401 / token invalid
+| Issue | Solution |
+|-------|---------|
+| HTTP 401 / token invalid | Reconnect the profile and re-enter credentials |
+| HTTP 403 / permission denied | Check FileMaker account privileges and role guard policy |
+| HTTP 404 / unsupported | Some servers don't expose all metadata/script routes — use fallback flows |
+| SSL/TLS errors | Verify certificate trust chain and server URL |
+| Features disabled | Trust the workspace to enable file generation, batch writes, and plugin loading |
 
-- Reconnect the profile.
-- Re-enter credentials or proxy key.
-- Verify server session policies.
+## Testing
 
-### HTTP 403 / permission denied
+253 tests across 58 test files covering:
 
-- Verify FileMaker account privileges and layout/script access.
-- In enterprise mode, verify role guard policy is not blocking the command.
+- **Unit tests**: stores, utilities, services, commands, tree view, webview HTML, CSP
+- **Integration tests** (mocked HTTP): CRUD operations, 401 retry, batch export/update, environment compare, schema snapshots, scripts
 
-### HTTP 404 / metadata or scripts unsupported
-
-- Some servers/profiles do not expose every metadata/script route.
-- Use fallback read-only flows and verify server/API version.
-
-### SSL/TLS errors
-
-- Confirm certificate trust chain on the host.
-- Confirm server URL is correct and reachable from your machine.
-
-### Workspace trust restrictions
-
-- Untrusted workspaces disable high-risk features (file generation, plugin loading, some write flows).
-- Trust the workspace to re-enable them.
-
-## Performance Notes
-
-- Prefer paginated find requests for large layouts.
-- Use batch export in `jsonl` for large datasets.
-- `high-scale` mode is optimized for large runs and constrains memory growth.
-- Request history/metrics intentionally store metadata only (not full record payloads).
-
-## Settings (Highlights)
-
-- `filemakerDataApiTools.requestTimeoutMs`
-- `filemaker.logging.level`
-- `filemaker.savedQueries.scope`
-- `filemaker.schema.cacheTtlSeconds`
-- `filemaker.schema.snapshots.storage`
-- `filemaker.schema.diagnostics.enabled`
-- `filemaker.typegen.outputDir`
-- `filemaker.batch.maxRecords`
-- `filemaker.batch.concurrency`
-- `filemaker.enterprise.mode`
-- `filemaker.enterprise.role`
-- `filemaker.performance.mode`
-- `filemaker.offline.mode`
-
-## Manual Test Checklist (v0.5)
-
-- Add/edit/remove profile and connect/disconnect.
-- Browse layouts and fields in explorer.
-- Run find from Query Builder, export JSON and CSV, verify history updates.
-- Open Record Viewer and Record Editor, validate and save with confirmation.
-- Save/load/run/manage saved queries.
-- Capture snapshot and run schema diff.
-- Compare environment set and export report.
-- Run batch export and dry-run batch update.
-- Toggle offline mode and verify write gating.
-- Open diagnostics dashboard and verify request metrics update.
-
-## Test Matrix
-
-- Unit tests:
-  - stores (profiles, saved queries, history, metrics, jobs)
-  - utility validation/redaction/error normalization
-  - diff/typegen/performance helper logic
-  - webview message guard helpers
-- Integration tests (mocked HTTP):
-  - list/get/find success paths
-  - 401 re-auth retry
-  - metadata unsupported handling
-  - script execution and edit record mapping
-  - timeout/abort/non-JSON error handling
-  - batch export/update and environment compare paths
+```bash
+npm test              # run all tests
+npm run test:coverage # run with coverage reporting
+```
 
 ## Development
 
 ```bash
 npm install
-npm run lint
-npm run build
-npm test
+npm run lint          # eslint with zero-warning enforcement
+npm run typecheck     # tsc --noEmit
+npm run build         # esbuild + webview copy
+npm test              # vitest
 ```
 
-See:
+See also:
 - [ARCHITECTURE.md](./ARCHITECTURE.md)
 - [CONTRIBUTING.md](./CONTRIBUTING.md)
 - [SECURITY.md](./SECURITY.md)
 - [UPGRADE.md](./UPGRADE.md)
+- [docs/roadmap.md](../docs/roadmap.md)
+
+## License
+
+MIT

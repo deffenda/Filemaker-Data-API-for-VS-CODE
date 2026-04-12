@@ -1,15 +1,14 @@
 # Current Task
 
-task_id: 6
-title: Final CI pass and version bump
+task_id: 3
+title: Final CI pass and version bump to 0.7.0
 status: done
-phase: 4A
-depends_on: all previous tasks
+phase: 3B
+depends_on: Task 1, Task 2
 
 ## Result
 
-- Version bumped to 0.6.0 in extension/package.json
-- CHANGELOG.md updated with complete v0.6.0 release notes
-- All 191 tests pass across 52 files
-- Lint: zero warnings
-- Typecheck: zero errors
+- Version bumped to 0.7.0
+- CHANGELOG.md updated with v0.7.0 release notes
+- 214 tests pass across 54 test files
+- Lint and typecheck clean

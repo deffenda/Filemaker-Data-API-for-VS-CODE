@@ -10,6 +10,7 @@ import type { SavedQueriesStore } from '../services/savedQueriesStore';
 import type { SchemaService } from '../services/schemaService';
 import type { SchemaSnapshotStore } from '../services/schemaSnapshotStore';
 import type { ConnectionProfile, FileMakerFieldMetadata, JobRuntimeState } from '../types/fm';
+import { extractValueLists } from '../utils/valueListParser';
 
 export type ExplorerNodeKind =
   | 'offlineBadge'
@@ -27,6 +28,8 @@ export type ExplorerNodeKind =
   | 'schemaSnapshotsRoot'
   | 'schemaSnapshot'
   | 'schemaDiffAction'
+  | 'valueListsRoot'
+  | 'valueList'
   | 'placeholder';
 
 export class FMExplorerItem extends vscode.TreeItem {
@@ -121,6 +124,8 @@ export class FMExplorerProvider implements vscode.TreeDataProvider<FMExplorerIte
         return this.getFieldItems(element.profileId, element.layoutName);
       case 'schemaSnapshotsRoot':
         return this.getSchemaSnapshotItems(element.profileId, element.layoutName);
+      case 'valueListsRoot':
+        return this.getValueListItems(element.profileId, element.layoutName);
       default:
         return [];
     }
@@ -465,6 +470,15 @@ export class FMExplorerProvider implements vscode.TreeDataProvider<FMExplorerIte
         iconPath: new vscode.ThemeIcon('symbol-field')
       }),
       new FMExplorerItem({
+        kind: 'valueListsRoot',
+        label: 'Value Lists',
+        profileId,
+        layoutName,
+        collapsibleState: vscode.TreeItemCollapsibleState.Collapsed,
+        contextValue: 'fmValueListsRoot',
+        iconPath: new vscode.ThemeIcon('list-unordered')
+      }),
+      new FMExplorerItem({
         kind: 'schemaSnapshotsRoot',
         label: 'Schema Snapshots',
         profileId,
@@ -585,6 +599,67 @@ export class FMExplorerProvider implements vscode.TreeDataProvider<FMExplorerIte
           kind: 'placeholder',
           label: 'Failed to load fields',
           description: 'Use FileMaker: Refresh Schema Cache and try again.',
+          iconPath: new vscode.ThemeIcon('error')
+        })
+      ];
+    }
+  }
+
+  private async getValueListItems(
+    profileId: string | undefined,
+    layoutName: string | undefined
+  ): Promise<FMExplorerItem[]> {
+    if (!profileId || !layoutName) {
+      return [];
+    }
+
+    const profile = await this.profileStore.getProfile(profileId);
+    if (!profile) {
+      return [];
+    }
+
+    try {
+      const schema = await this.schemaService.getFields(profile, layoutName);
+
+      if (!schema.supported || !schema.metadata) {
+        return [
+          new FMExplorerItem({
+            kind: 'placeholder',
+            label: 'Value lists not available',
+            iconPath: new vscode.ThemeIcon('info')
+          })
+        ];
+      }
+
+      const valueLists = extractValueLists(schema.metadata);
+
+      if (valueLists.length === 0) {
+        return [
+          new FMExplorerItem({
+            kind: 'placeholder',
+            label: 'No value lists on this layout',
+            iconPath: new vscode.ThemeIcon('info')
+          })
+        ];
+      }
+
+      return valueLists.map(
+        (vl) =>
+          new FMExplorerItem({
+            kind: 'valueList',
+            label: vl.name,
+            description: `${vl.values.length} item${vl.values.length === 1 ? '' : 's'}`,
+            profileId,
+            layoutName,
+            contextValue: 'fmValueList',
+            iconPath: new vscode.ThemeIcon('list-unordered')
+          })
+      );
+    } catch {
+      return [
+        new FMExplorerItem({
+          kind: 'placeholder',
+          label: 'Failed to load value lists',
           iconPath: new vscode.ThemeIcon('error')
         })
       ];

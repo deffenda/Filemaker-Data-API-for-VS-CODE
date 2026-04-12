@@ -1,5 +1,3 @@
-import { randomUUID } from 'crypto';
-
 import * as vscode from 'vscode';
 
 import type { RoleGuard } from '../enterprise/roleGuard';
@@ -8,14 +6,12 @@ import type { Logger } from '../services/logger';
 import type { ProfileStore } from '../services/profileStore';
 import type { SavedQueriesStore } from '../services/savedQueriesStore';
 import type { SecretStore } from '../services/secretStore';
-import type { ConnectionProfile, FindRecordsRequest } from '../types/fm';
+import type { FindRecordsRequest } from '../types/fm';
 import {
   parseFindJson,
   parseOptionalNonNegativeInteger,
   parseSortJson,
-  validateDatabaseName,
-  validateRecordId,
-  validateServerUrl
+  validateRecordId
 } from '../utils/jsonValidate';
 import {
   openJsonDocument,
@@ -24,6 +20,7 @@ import {
   resolveProfileFromArg,
   showCommandError
 } from './common';
+import { ConnectionWizardPanel } from '../webviews/connectionWizard';
 import { QueryBuilderPanel } from '../webviews/queryBuilder';
 import { RecordViewerPanel } from '../webviews/recordViewer';
 
@@ -58,29 +55,7 @@ export function registerCoreCommands(deps: RegisterCoreCommandDeps): vscode.Disp
         return;
       }
 
-      const input = await collectProfileInput();
-      if (!input) {
-        return;
-      }
-
-      await profileStore.upsertProfile(input.profile);
-
-      if (input.profile.authMode === 'direct') {
-        if (input.password) {
-          await secretStore.setPassword(input.profile.id, input.password);
-        }
-
-        await secretStore.deleteProxyApiKey(input.profile.id);
-      } else {
-        if (input.proxyApiKey) {
-          await secretStore.setProxyApiKey(input.profile.id, input.proxyApiKey);
-        }
-
-        await secretStore.deletePassword(input.profile.id);
-      }
-
-      refreshExplorer();
-      vscode.window.showInformationMessage(`Added connection profile "${input.profile.name}".`);
+      ConnectionWizardPanel.createOrShow(context, profileStore, secretStore, fmClient, logger);
     }),
 
     vscode.commands.registerCommand('filemakerDataApiTools.editConnectionProfile', async (arg: unknown) => {
@@ -96,29 +71,7 @@ export function registerCoreCommands(deps: RegisterCoreCommandDeps): vscode.Disp
         return;
       }
 
-      const input = await collectProfileInput(profile);
-      if (!input) {
-        return;
-      }
-
-      await profileStore.upsertProfile(input.profile);
-
-      if (input.profile.authMode === 'direct') {
-        if (typeof input.password === 'string' && input.password.length > 0) {
-          await secretStore.setPassword(input.profile.id, input.password);
-        }
-
-        await secretStore.deleteProxyApiKey(input.profile.id);
-      } else {
-        if (typeof input.proxyApiKey === 'string' && input.proxyApiKey.length > 0) {
-          await secretStore.setProxyApiKey(input.profile.id, input.proxyApiKey);
-        }
-
-        await secretStore.deletePassword(input.profile.id);
-      }
-
-      refreshExplorer();
-      vscode.window.showInformationMessage(`Updated profile "${input.profile.name}".`);
+      ConnectionWizardPanel.createOrShow(context, profileStore, secretStore, fmClient, logger, profile);
     }),
 
     vscode.commands.registerCommand(
@@ -397,198 +350,4 @@ export function registerCoreCommands(deps: RegisterCoreCommandDeps): vscode.Disp
       refreshExplorer();
     })
   ];
-}
-
-async function collectProfileInput(
-  existing?: ConnectionProfile
-): Promise<
-  | {
-      profile: ConnectionProfile;
-      password?: string;
-      proxyApiKey?: string;
-    }
-  | undefined
-> {
-  const name = await vscode.window.showInputBox({
-    title: existing ? 'Edit Connection Profile' : 'Add Connection Profile',
-    prompt: 'Profile name',
-    value: existing?.name,
-    ignoreFocusOut: true,
-    validateInput: (value) => (value.trim().length === 0 ? 'Profile name is required.' : undefined)
-  });
-
-  if (!name) {
-    return undefined;
-  }
-
-  const authMode = await vscode.window.showQuickPick(
-    [
-      { label: 'Direct', value: 'direct' as const, detail: 'Extension calls FileMaker Data API directly.' },
-      {
-        label: 'Proxy',
-        value: 'proxy' as const,
-        detail: 'Extension calls your proxy endpoint (recommended for teams).'
-      }
-    ],
-    {
-      title: 'Authentication Mode',
-      placeHolder: 'Select profile authentication mode'
-    }
-  );
-
-  if (!authMode) {
-    return undefined;
-  }
-
-  const serverUrl = await vscode.window.showInputBox({
-    title: `${authMode.label} Profile`,
-    prompt: 'Server URL (https://server.example.com)',
-    value: existing?.serverUrl ?? '',
-    ignoreFocusOut: true,
-    validateInput: (value) => validateServerUrl(value).error
-  });
-
-  if (!serverUrl) {
-    return undefined;
-  }
-
-  const database = await vscode.window.showInputBox({
-    title: `${authMode.label} Profile`,
-    prompt: 'Database name',
-    value: existing?.database,
-    ignoreFocusOut: true,
-    validateInput: (value) => validateDatabaseName(value).error
-  });
-
-  if (!database) {
-    return undefined;
-  }
-
-  const normalizedServerUrl = validateServerUrl(serverUrl);
-  const normalizedDatabase = validateDatabaseName(database);
-  if (!normalizedServerUrl.ok || !normalizedServerUrl.value) {
-    await showCommandError(new Error(normalizedServerUrl.error ?? 'Server URL is invalid.'), {
-      fallbackMessage: 'Connection profile server URL is invalid.'
-    });
-    return undefined;
-  }
-  const serverUrlValue = normalizedServerUrl.value;
-
-  if (!normalizedDatabase.ok || !normalizedDatabase.value) {
-    await showCommandError(new Error(normalizedDatabase.error ?? 'Database name is invalid.'), {
-      fallbackMessage: 'Connection profile database name is invalid.'
-    });
-    return undefined;
-  }
-  const databaseValue = normalizedDatabase.value;
-
-  const defaultApiBasePath = vscode.workspace
-    .getConfiguration('filemakerDataApiTools')
-    .get<string>('defaultApiBasePath', '/fmi/data');
-  const defaultApiVersionPath = vscode.workspace
-    .getConfiguration('filemakerDataApiTools')
-    .get<string>('defaultApiVersionPath', 'vLatest');
-
-  const apiBasePath = await vscode.window.showInputBox({
-    title: 'API Path',
-    prompt: 'API base path',
-    value: existing?.apiBasePath ?? defaultApiBasePath,
-    ignoreFocusOut: true,
-    validateInput: (value) => (value.trim().length === 0 ? 'API base path is required.' : undefined)
-  });
-
-  if (!apiBasePath) {
-    return undefined;
-  }
-
-  const apiVersionPath = await vscode.window.showInputBox({
-    title: 'API Version',
-    prompt: 'API version path',
-    value: existing?.apiVersionPath ?? defaultApiVersionPath,
-    ignoreFocusOut: true,
-    validateInput: (value) => (value.trim().length === 0 ? 'API version path is required.' : undefined)
-  });
-
-  if (!apiVersionPath) {
-    return undefined;
-  }
-
-  const profile: ConnectionProfile = {
-    id: existing?.id ?? randomUUID(),
-    name: name.trim(),
-    authMode: authMode.value,
-    serverUrl: serverUrlValue,
-    database: databaseValue,
-    apiBasePath: apiBasePath.trim(),
-    apiVersionPath: apiVersionPath.trim()
-  };
-
-  if (authMode.value === 'direct') {
-    const username = await vscode.window.showInputBox({
-      title: 'Direct Authentication',
-      prompt: 'Username',
-      value: existing?.username,
-      ignoreFocusOut: true,
-      validateInput: (value) => (value.trim().length === 0 ? 'Username is required.' : undefined)
-    });
-
-    if (!username) {
-      return undefined;
-    }
-
-    profile.username = username.trim();
-
-    const password = await vscode.window.showInputBox({
-      title: 'Direct Authentication',
-      prompt: existing ? 'Password (leave blank to keep existing password)' : 'Password',
-      password: true,
-      ignoreFocusOut: true
-    });
-
-    if (!existing && (!password || password.length === 0)) {
-      vscode.window.showErrorMessage('Password is required for a new direct-auth profile.');
-      return undefined;
-    }
-
-    return {
-      profile,
-      password
-    };
-  }
-
-  const proxyEndpoint = await vscode.window.showInputBox({
-    title: 'Proxy Authentication',
-    prompt: 'Proxy endpoint URL',
-    value: existing?.proxyEndpoint,
-    ignoreFocusOut: true,
-    validateInput: (value) => validateServerUrl(value).error
-  });
-
-  if (!proxyEndpoint) {
-    return undefined;
-  }
-
-  const normalizedProxyEndpoint = validateServerUrl(proxyEndpoint);
-  if (!normalizedProxyEndpoint.ok || !normalizedProxyEndpoint.value) {
-    await showCommandError(new Error(normalizedProxyEndpoint.error ?? 'Proxy endpoint is invalid.'), {
-      fallbackMessage: 'Proxy endpoint is invalid.'
-    });
-    return undefined;
-  }
-
-  profile.proxyEndpoint = normalizedProxyEndpoint.value;
-
-  const proxyApiKey = await vscode.window.showInputBox({
-    title: 'Proxy Authentication',
-    prompt: existing
-      ? 'Proxy API key / bearer token (leave blank to keep existing key)'
-      : 'Proxy API key / bearer token (optional)',
-    password: true,
-    ignoreFocusOut: true
-  });
-
-  return {
-    profile,
-    proxyApiKey
-  };
 }

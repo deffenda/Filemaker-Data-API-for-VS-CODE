@@ -32,6 +32,75 @@ npm test
 2. Confirm the **FileMaker Explorer** view appears in the sidebar.
 3. Run **FileMaker: Open Query Builder** and verify the layout picker loads.
 
+## Getting Started
+
+### Prerequisites
+
+- A FileMaker Server with the Data API enabled
+- A FileMaker account with the **fmrest** extended privilege enabled
+- The server must be reachable from your machine (HTTPS)
+
+### Connect with Direct Mode
+
+Direct mode connects the extension straight to your FileMaker Server. Best for individual use or development.
+
+1. Open Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`).
+2. Run **FileMaker: Add Connection Profile**.
+3. Enter a **Profile name** (e.g., "Dev Server").
+4. Select **Direct** authentication mode.
+5. Enter your **Server URL** (e.g., `https://fm.yourcompany.com`).
+6. Enter your **Database name** (e.g., `MyDatabase`).
+7. Accept the defaults for **API base path** (`/fmi/data`) and **API version** (`vLatest`) — change these only if your server uses a custom path.
+8. Enter your **Username** (the FileMaker account with fmrest privilege).
+9. Enter your **Password** (stored securely in VS Code SecretStorage, never written to disk).
+10. Run **FileMaker: Connect** and select the profile you just created.
+11. The **FileMaker Explorer** in the sidebar will populate with your layouts.
+
+### Connect with Proxy Mode
+
+Proxy mode routes requests through your own middleware endpoint. Recommended for teams, shared environments, or when you need custom auth handling.
+
+1. Open Command Palette.
+2. Run **FileMaker: Add Connection Profile**.
+3. Enter a **Profile name**.
+4. Select **Proxy** authentication mode.
+5. Enter your **Server URL** (the FileMaker server your proxy talks to).
+6. Enter your **Database name**.
+7. Accept the API path defaults.
+8. Enter your **Proxy endpoint URL** (e.g., `https://api.yourcompany.com/fm-proxy`).
+9. Enter your **API key** (optional — sent as `Bearer` token to your proxy).
+10. Run **FileMaker: Connect** and select the profile.
+
+### Your First Query
+
+Once connected:
+
+1. Run **FileMaker: Open Query Builder** from Command Palette.
+2. Select a **layout** from the dropdown.
+3. Enter find criteria in the JSON editor (e.g., `[{ "Status": "Active" }]`).
+4. Click **Run Find**.
+5. Results appear in the table below — export to JSON or CSV from there.
+
+### Common Commands
+
+| Command | What it does |
+|---------|-------------|
+| **FileMaker: Add Connection Profile** | Create a new server connection |
+| **FileMaker: Connect** | Open a session with a saved profile |
+| **FileMaker: Disconnect** | Close the active session |
+| **FileMaker: Open Query Builder** | Visual query interface with export |
+| **FileMaker: Open Record Editor** | Edit a record with field validation |
+| **FileMaker: Create Record** | Create a new record on a layout |
+| **FileMaker: Delete Record** | Delete a record (with confirmation) |
+| **FileMaker: Open Script Runner** | Run FileMaker scripts with parameters |
+| **FileMaker: Capture Schema Snapshot** | Save layout metadata for diff tracking |
+| **FileMaker: Diff Schema Snapshots** | Compare two snapshots side by side |
+| **FileMaker: Batch Export (Find)** | Export large result sets to JSONL or CSV |
+| **FileMaker: Show Request History** | View past API requests |
+| **FileMaker: Toggle Offline Mode** | Switch to cached metadata (read-only) |
+
+All commands are available from the Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`) — type "FileMaker" to see the full list.
+
 ## Features
 
 ### Records (Full CRUD)

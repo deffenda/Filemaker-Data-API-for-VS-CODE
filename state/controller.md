@@ -1,9 +1,9 @@
 # Controller State
 
-current_state: ready_for_review
-target_version: 0.7.0
+current_state: done
+target_version: 1.0.0
 plan_file: /ai/plan.md
 tasks_file: /ai/tasks.md
 acceptance_file: /ai/acceptance.md
 last_updated: 2026-04-12
-current_task: 3
+notes: v1.0.0 production release complete. Roadmap through v1.0.0 shipped. Post-1.0 work available in docs/roadmap.md.

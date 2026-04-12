@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.8.0
+
+- Portal support:
+  - Added `extractPortals()` utility for structured portal data extraction from records
+  - Added `extractPortalMetadata()` for parsing portal field metadata from layout info
+  - Added `buildPortalParams()` for portal-aware find/get request parameters (limit, offset per portal)
+  - Portal field names extracted and sorted, internal fields (recordId/modId) filtered
+- Tests:
+  - 12 portal utility tests (extraction, metadata, params, edge cases)
+  - Total: 226 tests across 55 test files
+
 ## 0.7.0
 
 - Value list support:

@@ -61,6 +61,43 @@ vi.mock('vscode', () => {
     },
     ViewColumn: {
       One: 1
+    },
+    TreeItemCollapsibleState: {
+      None: 0,
+      Collapsed: 1,
+      Expanded: 2
+    },
+    TreeItem: class {
+      label: string;
+      collapsibleState: number;
+      description?: string;
+      tooltip?: string;
+      contextValue?: string;
+      command?: unknown;
+      iconPath?: unknown;
+      constructor(label: string, collapsibleState?: number) {
+        this.label = label;
+        this.collapsibleState = collapsibleState ?? 0;
+      }
+    },
+    ThemeIcon: class {
+      id: string;
+      constructor(id: string) {
+        this.id = id;
+      }
+    },
+    EventEmitter: class {
+      private handlers: Array<(...args: unknown[]) => void> = [];
+      event = (handler: (...args: unknown[]) => void) => {
+        this.handlers.push(handler);
+        return { dispose: vi.fn() };
+      };
+      fire = (data?: unknown) => {
+        for (const handler of this.handlers) {
+          handler(data);
+        }
+      };
+      dispose = vi.fn();
     }
   };
 });

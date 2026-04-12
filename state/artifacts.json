@@ -1,0 +1,15 @@
+{
+  "last_updated": "2026-04-12T00:00:00Z",
+  "code_changes_present": false,
+  "claims": {
+    "implementation": "not_started",
+    "validation": "not_started",
+    "deployment": "not_started"
+  },
+  "evidence": {
+    "build": {"status":"not_run","reason":"seed file","updated_at":"2026-04-12T00:00:00Z","paths":[]},
+    "test": {"status":"not_run","reason":"seed file","updated_at":"2026-04-12T00:00:00Z","paths":[]},
+    "run": {"status":"not_run","reason":"seed file","updated_at":"2026-04-12T00:00:00Z","paths":[]},
+    "deploy": {"status":"not_required","reason":"seed file","updated_at":"2026-04-12T00:00:00Z","paths":[]}
+  }
+}

@@ -1,6 +1,6 @@
 # Controller State
 
-current_state: done
+current_state: ready_for_codex
 target_version: 1.0.0
 plan_file: /ai/plan.md
 tasks_file: /ai/tasks.md

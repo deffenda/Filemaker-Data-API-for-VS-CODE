@@ -1,37 +1,32 @@
-# Acceptance Criteria — v0.7.0
+# Acceptance Criteria — v1.1.0: Collaboration Features
 
-## AC-1: Value list types and extraction
-- [ ] `ValueListItem` interface exists in fm.ts with `value` and `displayValue` fields
-- [ ] `ValueList` interface exists with `name` and `values: ValueListItem[]`
-- [ ] `extractValueLists()` utility extracts value lists from layout metadata
-- [ ] Unit tests pass for extraction with valid data, empty data, missing field
+## T-COL-1: Shared connection profiles
 
-## AC-2: Value lists in explorer
-- [ ] Layout nodes in fmExplorer show a "Value Lists" group when value lists exist
-- [ ] Each value list appears as a child node with its name
+- [ ] `fmtools.sharedProfiles` workspace setting is declared in `package.json` contributes.configuration
+- [ ] Secret fields (username, password, token) are never written to workspace settings
+- [ ] Shared profiles appear in the profile picker alongside local profiles, with a visual indicator
+- [ ] Local profile values take precedence over shared profile values on key conflicts
+- [ ] `fmtools.exportProfileToWorkspace` command writes only non-secret fields to workspace config
+- [ ] Unit tests pass: merge precedence, secret exclusion, read-only enforcement
+- [ ] `npm run lint`, `npm run typecheck`, `npm test` — all clean
 
-## AC-3: Value lists in Record Editor
-- [ ] Fields with associated value lists render as `<select>` dropdowns
-- [ ] Fields without value lists still render as `<textarea>`
-- [ ] Selected value list option sets the field value correctly
+## T-COL-2: Team query library
 
-## AC-4: Container field detection
-- [ ] `isContainerField()` correctly identifies container type fields
-- [ ] `resolveContainerUrl()` builds full download URL from server URL and container value
-- [ ] Unit tests pass for both utilities
+- [ ] `.vscode/fmtools-queries.json` is created when the first shared query is promoted
+- [ ] File schema: `{ version: 1, queries: SavedQuery[] }`
+- [ ] `fmtools.promoteQueryToShared` command copies a personal query to the shared store
+- [ ] Shared queries appear in the Query Builder with a "(shared)" label
+- [ ] External edits to the shared file are reflected in the UI without a window reload
+- [ ] Unit tests pass: load/save round-trip, external change reload, promote operation
+- [ ] `npm run lint`, `npm run typecheck`, `npm test` — all clean
 
-## AC-5: Container display in Record Viewer
-- [ ] Container fields with image content types show inline image preview
-- [ ] Container fields with non-image types show a download link
-- [ ] Non-container fields display unchanged
+## T-COL-3: Audit log export
 
-## AC-6: Container handling in Record Editor
-- [ ] Container fields are read-only in the editor
-- [ ] Container fields show informational text about upload limitations
-
-## AC-7: CI passes clean
-- [ ] `npm run lint` — zero warnings
-- [ ] `npm run typecheck` — zero errors
-- [ ] `npm test` — all tests pass
-- [ ] Version is 0.7.0
-- [ ] CHANGELOG.md has v0.7.0 section
+- [ ] `fmtools.exportRequestLog` command is available in the command palette
+- [ ] User can select JSONL or CSV output format
+- [ ] User can optionally filter by date range
+- [ ] JSONL output fields match the existing batch-export field conventions
+- [ ] CSV output includes a header row
+- [ ] Output file is written to the workspace root with a timestamped filename
+- [ ] Unit tests pass: JSONL formatter, CSV formatter, date-range filter
+- [ ] `npm run lint`, `npm run typecheck`, `npm test` — all clean

@@ -7,7 +7,7 @@ import type { ProfileStore } from '../services/profileStore';
 import type { SchemaService } from '../services/schemaService';
 import type { SettingsService } from '../services/settingsService';
 import { validateRecordId } from '../utils/jsonValidate';
-import { parseLayoutArg, pickProfile, promptForLayout } from './common';
+import { parseLayoutArg, pickProfile, promptForLayout, showCommandError } from './common';
 import { RecordEditorPanel } from '../webviews/recordEditor';
 
 interface RegisterRecordEditCommandsDeps {
@@ -124,6 +124,117 @@ export function registerRecordEditCommands(deps: RegisterRecordEditCommandsDeps)
         layout,
         recordId: recordId.trim()
       });
+    }),
+
+    vscode.commands.registerCommand('filemakerDataApiTools.createRecord', async (arg: unknown) => {
+      if (!settingsService.isRecordEditEnabled()) {
+        vscode.window.showInformationMessage('Record editing is disabled by settings.');
+        return;
+      }
+      if (!(await roleGuard.assertFeature('recordEdit', 'Create Record'))) {
+        return;
+      }
+
+      const contextArg = parseLayoutArg(arg);
+      let profileId = contextArg.profileId;
+      let layout = contextArg.layout;
+
+      if (!profileId) {
+        const profile = await pickProfile(profileStore, true);
+        if (!profile) {
+          return;
+        }
+        profileId = profile.id;
+      }
+
+      if (!layout) {
+        const profile = await profileStore.getProfile(profileId);
+        if (!profile) {
+          vscode.window.showErrorMessage('Selected profile not found.');
+          return;
+        }
+        layout = await promptForLayout(profile, fmClient);
+      }
+
+      if (!layout) {
+        return;
+      }
+
+      RecordEditorPanel.createOrShow(context, profileStore, fmClient, schemaService, logger, {
+        profileId,
+        layout,
+        mode: 'create'
+      });
+    }),
+
+    vscode.commands.registerCommand('filemakerDataApiTools.deleteRecord', async (arg: unknown) => {
+      if (!(await roleGuard.assertFeature('writeOperations', 'Delete Record'))) {
+        return;
+      }
+      if (!vscode.workspace.isTrusted) {
+        vscode.window.showWarningMessage('Delete Record is disabled in untrusted workspaces.');
+        return;
+      }
+
+      const contextArg = parseLayoutArg(arg);
+      let profileId = contextArg.profileId;
+      let layout = contextArg.layout;
+
+      if (!profileId) {
+        const profile = await pickProfile(profileStore, true);
+        if (!profile) {
+          return;
+        }
+        profileId = profile.id;
+      }
+
+      const profile = await profileStore.getProfile(profileId);
+      if (!profile) {
+        vscode.window.showErrorMessage('Selected profile not found.');
+        return;
+      }
+
+      if (!layout) {
+        layout = await promptForLayout(profile, fmClient);
+      }
+
+      if (!layout) {
+        return;
+      }
+
+      const recordId = await vscode.window.showInputBox({
+        title: 'Delete Record',
+        prompt: 'Enter the record ID to delete',
+        ignoreFocusOut: true,
+        validateInput: (value) => validateRecordId(value).error
+      });
+
+      if (!recordId) {
+        return;
+      }
+
+      const confirmation = await vscode.window.showWarningMessage(
+        `Delete record ${recordId.trim()} from layout "${layout}"? This cannot be undone.`,
+        { modal: true },
+        'Delete'
+      );
+
+      if (confirmation !== 'Delete') {
+        return;
+      }
+
+      try {
+        const result = await fmClient.deleteRecord(profile, layout, recordId.trim());
+        vscode.window.showInformationMessage(
+          `Record ${result.recordId} deleted from "${layout}".`
+        );
+      } catch (error) {
+        await showCommandError(error, {
+          fallbackMessage: 'Failed to delete record.',
+          logger,
+          logMessage: 'Delete record command failed.'
+        });
+      }
     })
   ];
 }

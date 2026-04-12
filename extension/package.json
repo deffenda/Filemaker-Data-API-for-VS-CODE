@@ -651,6 +651,7 @@
     "format": "prettier --write \"**/*.{ts,js,json,md,css,html}\"",
     "format:check": "prettier --check \"**/*.{ts,js,json,md,css,html}\"",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "vscode:prepublish": "npm run build",
     "typecheck": "tsc -p . --noEmit",
     "package:check": "vsce package --allow-missing-repository --baseContentUrl https://example.com/your-org/filemaker-data-api-tools/blob/main --baseImagesUrl https://example.com/your-org/filemaker-data-api-tools/raw/main"
@@ -673,6 +674,7 @@
     "rimraf": "^6.0.1",
     "shx": "^0.4.0",
     "typescript": "^5.8.3",
+    "@vitest/coverage-v8": "^2.1.8",
     "vitest": "^2.1.8"
   }
 }

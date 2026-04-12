@@ -5,6 +5,13 @@ export default defineConfig({
     environment: 'node',
     include: ['test/**/*.test.ts'],
     globals: true,
-    setupFiles: ['test/setup.ts']
+    setupFiles: ['test/setup.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      reportsDirectory: './coverage',
+      include: ['src/**/*.ts'],
+      exclude: ['src/**/*.d.ts', 'src/webviews/*/ui/**']
+    }
   }
 });

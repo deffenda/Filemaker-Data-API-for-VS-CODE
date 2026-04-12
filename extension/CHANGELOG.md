@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.0.0
+
+Production release.
+
+- Complete CRUD: find, get, create, edit, delete records
+- Value list support with extraction and explorer integration
+- Container field detection and URL resolution
+- Portal data utilities with pagination parameters
+- Global field support with payload builder/parser
+- Compound find queries with omit support
+- Duplicate record preparation with auto-enter field filtering
+- 253 tests across 58 test files
+- Coverage reporting with @vitest/coverage-v8
+- Webview rendering stability (loading skeletons, targeted DOM updates, debouncing)
+- Responsive CSS with fluid scaling and ARIA accessibility
+- Enterprise role guards and workspace trust enforcement
+- VS Code Marketplace publishing workflow in CI
+
 ## 0.9.0
 
 - Global field support:

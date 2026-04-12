@@ -77,9 +77,7 @@ Open-source, free connector for FileMaker Data API (fmrest) workflows.
 
 ---
 
-## Planned
-
-### v0.7.0 — Value Lists & Container Fields
+### v0.7.0 — Value Lists & Container Fields (shipped)
 
 **Theme:** Support the two most-requested FileMaker Data API features that are missing.
 
@@ -90,7 +88,7 @@ Open-source, free connector for FileMaker Data API (fmrest) workflows.
 - Container field upload support in Record Editor
 - Tests for value list and container field operations
 
-### v0.8.0 — Portal & Related Records
+### v0.8.0 — Portal & Related Records (shipped)
 
 **Theme:** First-class portal support for relational FileMaker workflows.
 
@@ -101,7 +99,7 @@ Open-source, free connector for FileMaker Data API (fmrest) workflows.
 - Portal pagination support
 - Type generation for portal fields
 
-### v0.9.0 — Global Fields & Multi-Request
+### v0.9.0 — Global Fields & Multi-Request (shipped)
 
 **Theme:** Advanced Data API features for power users.
 
@@ -111,7 +109,7 @@ Open-source, free connector for FileMaker Data API (fmrest) workflows.
 - Request templates (save and reuse compound find patterns)
 - Duplicate record support
 
-### v1.0.0 — Production Release
+### v1.0.0 — Production Release (shipped)
 
 **Theme:** Marketplace-ready quality bar for public release.
 

@@ -244,11 +244,12 @@ npm test              # vitest
 ```
 
 See also:
+- [User Guide](./docs/USER_GUIDE.md) — step-by-step setup and usage instructions
 - [ARCHITECTURE.md](./ARCHITECTURE.md)
 - [CONTRIBUTING.md](./CONTRIBUTING.md)
 - [SECURITY.md](./SECURITY.md)
 - [UPGRADE.md](./UPGRADE.md)
-- [docs/roadmap.md](../docs/roadmap.md)
+- [Roadmap](../docs/roadmap.md)
 
 ## License
 

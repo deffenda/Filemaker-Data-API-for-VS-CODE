@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-04-13T00:48:56Z",
+  "last_updated": "2026-04-13T00:49:48Z",
   "code_changes_present": false,
   "claims": {
     "implementation": "not_started",
@@ -32,7 +32,8 @@
       "status": "not_required",
       "reason": "seed file",
       "updated_at": "2026-04-12T00:00:00Z",
-      "paths": []
+      "paths": [],
+      "metadata_only": true
     }
   }
 }

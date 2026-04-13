@@ -3,17 +3,36 @@
   "displayName": "FileMaker Data API Tools",
   "description": "VS Code tools for working with the FileMaker Data API (fmrest).",
   "version": "1.0.0",
-  "publisher": "your-org",
+  "publisher": "deffenda",
   "license": "MIT",
+  "icon": "docs/marketplace/icon.png",
+  "galleryBanner": {
+    "color": "#081726",
+    "theme": "dark"
+  },
   "repository": {
     "type": "git",
-    "url": "https://example.com/your-org/filemaker-data-api-tools.git"
+    "url": "https://github.com/deffenda/filemaker-data-api-for-vs-code.git"
+  },
+  "homepage": "https://github.com/deffenda/filemaker-data-api-for-vs-code",
+  "bugs": {
+    "url": "https://github.com/deffenda/filemaker-data-api-for-vs-code/issues"
   },
   "engines": {
     "vscode": "^1.96.0"
   },
   "categories": [
+    "Data Science",
     "Other"
+  ],
+  "keywords": [
+    "filemaker",
+    "database",
+    "data api",
+    "claris",
+    "fmrest",
+    "query builder",
+    "schema"
   ],
   "activationEvents": [
     "onView:filemakerExplorer",
@@ -659,8 +678,9 @@
   "scripts": {
     "clean": "rimraf dist",
     "bundle:extension": "esbuild src/extension.ts --bundle --platform=node --format=cjs --external:vscode --outfile=dist/extension.js",
-    "copy:webviews": "shx mkdir -p dist/webviews/queryBuilder/ui dist/webviews/recordViewer/ui dist/webviews/scriptRunner/ui dist/webviews/schemaDiff/ui dist/webviews/recordEditor/ui dist/webviews/connectionWizard/ui dist/webviews/layoutMode/ui && shx cp -r src/webviews/queryBuilder/ui/* dist/webviews/queryBuilder/ui && shx cp -r src/webviews/recordViewer/ui/* dist/webviews/recordViewer/ui && shx cp -r src/webviews/scriptRunner/ui/* dist/webviews/scriptRunner/ui && shx cp -r src/webviews/schemaDiff/ui/* dist/webviews/schemaDiff/ui && shx cp -r src/webviews/recordEditor/ui/* dist/webviews/recordEditor/ui && shx cp -r src/webviews/connectionWizard/ui/* dist/webviews/connectionWizard/ui && shx cp -r src/webviews/layoutMode/ui/* dist/webviews/layoutMode/ui && shx cp -r ../designer-ui/dist/* dist/webviews/layoutMode/ui",
-    "build": "npm --prefix ../designer-ui run build && npm run clean && npm run bundle:extension && npm run copy:webviews",
+    "build:designer-ui": "node ./scripts/build-designer-ui-if-available.mjs",
+    "copy:webviews": "shx mkdir -p dist/webviews/queryBuilder/ui dist/webviews/recordViewer/ui dist/webviews/scriptRunner/ui dist/webviews/schemaDiff/ui dist/webviews/recordEditor/ui dist/webviews/connectionWizard/ui dist/webviews/layoutMode/ui && shx cp -r src/webviews/queryBuilder/ui/* dist/webviews/queryBuilder/ui && shx cp -r src/webviews/recordViewer/ui/* dist/webviews/recordViewer/ui && shx cp -r src/webviews/scriptRunner/ui/* dist/webviews/scriptRunner/ui && shx cp -r src/webviews/schemaDiff/ui/* dist/webviews/schemaDiff/ui && shx cp -r src/webviews/recordEditor/ui/* dist/webviews/recordEditor/ui && shx cp -r src/webviews/connectionWizard/ui/* dist/webviews/connectionWizard/ui && shx cp -r src/webviews/layoutMode/ui/* dist/webviews/layoutMode/ui && sh -c 'if [ -d ../designer-ui/dist ]; then shx cp -r ../designer-ui/dist/* dist/webviews/layoutMode/ui; fi'",
+    "build": "npm run build:designer-ui && npm run clean && npm run bundle:extension && npm run copy:webviews",
     "watch": "tsc -w -p .",
     "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\" --max-warnings=0",
     "format": "prettier --write \"**/*.{ts,js,json,md,css,html}\"",
@@ -669,7 +689,8 @@
     "test:coverage": "vitest run --coverage",
     "vscode:prepublish": "npm run build",
     "typecheck": "tsc -p . --noEmit",
-    "package:check": "vsce package --allow-missing-repository --baseContentUrl https://example.com/your-org/filemaker-data-api-tools/blob/main --baseImagesUrl https://example.com/your-org/filemaker-data-api-tools/raw/main"
+    "package:vsix": "shx mkdir -p ../artifacts && vsce package --no-dependencies --allow-missing-repository --baseContentUrl https://github.com/deffenda/filemaker-data-api-for-vs-code/blob/main/extension --baseImagesUrl https://raw.githubusercontent.com/deffenda/filemaker-data-api-for-vs-code/main/extension --out ../artifacts/filemaker-data-api-tools-${npm_package_version}.vsix",
+    "package:check": "npm run package:vsix"
   },
   "dependencies": {
     "axios": "1.15.0",

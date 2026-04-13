@@ -94,7 +94,8 @@ Loop:
 9. If review passes and PR is merged:
    - If tasks remain in `ai/tasks.md` with status `pending`, set `ready_for_claude`.
    - If no tasks remain, set `done`.
-   - Claude reads `ready_for_claude`, marks the finished task `done`, advances `state/current_task.md` to the next task, and sets `ready_for_codex`.
+   - `watch-open-prs` automatically advances state to `ready_for_codex` for the next pending task after merge (no Claude action needed).
+   - If the next task needs re-planning or is marked `requires_claude_review: true`, state is set to `ready_for_claude` instead.
 10. Each task must pass lint + typecheck + test before the PR is opened.
 
 ## Standards reference
@@ -112,6 +113,35 @@ Single-tool rule:
 
 Budget rules:
 
-- Codex: implement at most 1 task per repo per run; after opening a PR, stop
+- Codex: implement up to 3 sequential tasks per run (batch mode); opens one PR per batch
 - review gate: CI checks (free) + Copilot review (primary) are the merge gate; Gemini is optional
 - auto-merge: PRs that pass all required CI checks with no blocking review comments are merged automatically
+
+## Pipeline automation
+
+The following cron automations run on your local machine (no GitHub Actions cost):
+
+| Time (every hour) | Automation | What it does |
+|---|---|---|
+| :00 | `codex-{repo}` | Implements up to 3 tasks (batch) if `ready_for_codex` |
+| :30 | `post-push-reviewer` | Reviews newly-opened PRs (advisory checks) |
+| :45 | `watch-open-prs` | Merges green PRs, advances state to `ready_for_codex` |
+| :55 | `fix-stuck-repos` | Fixes repos with `review_failure_count >= 2` |
+
+After a PR merges, `watch-open-prs` automatically advances state to `ready_for_codex` for the next pending task. **Claude intervention is only needed when:**
+- A task is marked `requires_claude_review: true` in `ai/tasks.md`
+- The controller reaches `ready_for_claude` after a planning failure
+- `state/controller.md` reaches `blocked`
+
+## Self-healing behaviours
+
+These happen automatically — you don't need to intervene:
+
+- **Stale lease** (`execution_status: in_progress`, lease expired): Codex or fix-stuck-repos clears it and retries
+- **Fingerprint unchanged + lease expired**: Codex clears the stale lease and starts fresh
+- **State inconsistency** (tasks.json vs roadmap): `watch-open-prs` auto-fixes before advancing
+- **Merge conflicts on PR branch**: automation rebases with `-X theirs` for state files
+
+## State file ownership
+
+Read `AGENTS.md` for the full list. Key rule: **always commit state file changes immediately** — automations read from `origin/main` via `git show` and will not see uncommitted local changes.

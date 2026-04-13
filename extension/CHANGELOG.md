@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+- Added Marketplace-ready extension metadata:
+  - real `publisher`, repository, homepage, and issue tracker URLs
+  - Marketplace categories, keywords, icon, and gallery banner
+- Rewrote the extension README for Marketplace publication:
+  - product overview, install path, quick start, and feature highlights
+  - repo-hosted screenshots for explorer, query builder, and schema/batch workflows
+- Added a dedicated `package:vsix` script that emits the VSIX into `artifacts/`
+- Updated CI tag packaging to publish the generated VSIX artifact instead of rebuilding ad hoc
+- Made VSIX packaging dependency-free after confirming the extension bundle is self-contained, so `vsce package` no longer depends on a healthy root workspace install
+
 ## 1.0.0
 
 Production release.

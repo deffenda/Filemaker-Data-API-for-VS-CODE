@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-04-12T23:59:09Z",
+  "last_updated": "2026-04-13T00:48:56Z",
   "code_changes_present": false,
   "claims": {
     "implementation": "not_started",
@@ -11,19 +11,22 @@
       "status": "not_run",
       "reason": "seed file",
       "updated_at": "2026-04-12T00:00:00Z",
-      "paths": []
+      "paths": [],
+      "metadata_only": true
     },
     "test": {
       "status": "not_run",
       "reason": "seed file",
       "updated_at": "2026-04-12T00:00:00Z",
-      "paths": []
+      "paths": [],
+      "metadata_only": true
     },
     "run": {
       "status": "not_run",
       "reason": "seed file",
       "updated_at": "2026-04-12T00:00:00Z",
-      "paths": []
+      "paths": [],
+      "metadata_only": true
     },
     "deploy": {
       "status": "not_required",

@@ -1,42 +1,35 @@
 {
-  "last_updated": "2026-04-13T06:10:25Z",
-  "code_changes_present": true,
+  "last_updated": "2026-04-13T06:54:07Z",
+  "code_changes_present": false,
   "claims": {
-    "implementation": "complete",
-    "validation": "complete",
+    "implementation": "not_started",
+    "validation": "not_started",
     "deployment": "not_started"
   },
   "evidence": {
     "build": {
-      "status": "passed",
+      "status": "not_run",
       "reason": "",
-      "updated_at": "2026-04-13T06:10:25Z",
-      "paths": [
-        "artifacts/build.log"
-      ]
+      "updated_at": "2026-04-13T06:54:07Z",
+      "paths": []
     },
     "test": {
-      "status": "passed",
+      "status": "not_run",
       "reason": "",
-      "updated_at": "2026-04-13T06:10:25Z",
-      "paths": [
-        "artifacts/test.log"
-      ]
+      "updated_at": "2026-04-13T06:54:07Z",
+      "paths": []
     },
     "run": {
-      "status": "passed",
+      "status": "not_run",
       "reason": "",
-      "updated_at": "2026-04-13T06:10:25Z",
-      "paths": [
-        "artifacts/run.log"
-      ]
+      "updated_at": "2026-04-13T06:54:07Z",
+      "paths": []
     },
     "deploy": {
-      "status": "not_required",
-      "reason": "Marketplace publishing is handled by V4 after V1-V3 are complete.",
-      "updated_at": "2026-04-13T06:10:25Z",
-      "paths": [],
-      "metadata_only": true
+      "status": "not_run",
+      "reason": "",
+      "updated_at": "2026-04-13T06:54:07Z",
+      "paths": []
     }
   }
 }

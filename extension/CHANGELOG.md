@@ -10,6 +10,7 @@
   - repo-hosted screenshots for explorer, query builder, and schema/batch workflows
 - Added a dedicated `package:vsix` script that emits the VSIX into `artifacts/`
 - Updated CI tag packaging to publish the generated VSIX artifact instead of rebuilding ad hoc
+- Made VSIX packaging dependency-free after confirming the extension bundle is self-contained, so `vsce package` no longer depends on a healthy root workspace install
 
 ## 1.0.0
 

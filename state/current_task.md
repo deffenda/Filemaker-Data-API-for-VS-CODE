@@ -3,7 +3,7 @@
 task_id: V1
 description: VS Code Marketplace publishing — icon, metadata, README, VSIX build pipeline
 scope: extension/, package.json, README.md
-status: pending
+status: ready_for_review
 execution_status: idle
 execution_branch:
 execution_started_at:

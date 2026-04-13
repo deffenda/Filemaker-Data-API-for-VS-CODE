@@ -1,255 +1,138 @@
-# FileMaker Data API Tools for VS Code
+# FileMaker Data API Tools
 
-A free, open-source VS Code extension for working with the FileMaker Data API (`fmrest`). Connect to FileMaker servers, browse layouts and metadata, run queries, create/edit/delete records, run scripts, compare environments, and run batch jobs — all from within VS Code.
+FileMaker Data API Tools turns VS Code into a serious FileMaker workspace: connect to a FileMaker server, inspect layouts and metadata, run find requests, edit records, compare schema snapshots, export large result sets, and review diagnostics without leaving the editor.
 
-No telemetry. No account required.
+Built for teams that already live in VS Code:
+
+- Direct and proxy connection modes
+- Visual query builder plus raw JSON find requests
+- Full CRUD workflows for records
+- Schema snapshots, diffing, and generated TypeScript types
+- Batch export/update jobs and request history
+- Enterprise controls, offline metadata mode, and safe plugin hooks
+- No telemetry and no required cloud account
+
+## Product Tour
+
+![Explorer overview](docs/marketplace/explorer-overview.png)
+
+The explorer keeps profiles, layouts, saved queries, schema snapshots, request history, environment sets, and diagnostics in one sidebar workflow.
+
+![Query builder](docs/marketplace/query-builder.png)
+
+The query builder gives you a readable UI for FileMaker find payloads, saved queries, result previews, and export actions.
+
+![Schema diff and batch tooling](docs/marketplace/schema-and-batch.png)
+
+Capture schema snapshots, review drift between environments, and run batch exports with job status and diagnostics built in.
 
 ## Install
 
-### From VSIX
+### From the VS Code Marketplace
 
-1. Download or build `filemaker-data-api-tools-1.0.0.vsix`.
-2. Open VS Code.
-3. Open Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`).
-4. Run **Extensions: Install from VSIX...** and select the file.
-5. Reload when prompted.
+1. Open the Extensions view in VS Code.
+2. Search for `FileMaker Data API Tools`.
+3. Select **Install**.
+4. Reload the window if VS Code prompts you.
 
-### From Source
+### From a VSIX
 
-```bash
-npm install
-npm run build
-npm test
-```
+1. Download `filemaker-data-api-tools-1.0.0.vsix`.
+2. Run **Extensions: Install from VSIX...** from the Command Palette.
+3. Select the VSIX file and reload the window.
 
-1. Open this project in VS Code.
-2. Press `F5` to launch the Extension Development Host.
-3. Run **FileMaker: Add Connection Profile** from Command Palette.
+## Quick Start
 
-### Verify Installation
+### Connect with direct mode
 
-1. Run **FileMaker: Add Connection Profile** from Command Palette.
-2. Confirm the **FileMaker Explorer** view appears in the sidebar.
-3. Run **FileMaker: Open Query Builder** and verify the layout picker loads.
+1. Run **FileMaker: Add Connection Profile**.
+2. Choose a profile name such as `Dev Server`.
+3. Select **Direct**.
+4. Enter the FileMaker server URL, database name, and credentials.
+5. Run **FileMaker: Connect**.
 
-## Getting Started
+Credentials stay in VS Code `SecretStorage`; they are never written to workspace settings or logs.
 
-### Prerequisites
+### Connect with proxy mode
 
-- A FileMaker Server with the Data API enabled
-- A FileMaker account with the **fmrest** extended privilege enabled
-- The server must be reachable from your machine (HTTPS)
+1. Run **FileMaker: Add Connection Profile**.
+2. Select **Proxy**.
+3. Enter the FileMaker server URL, database name, and your proxy endpoint.
+4. Add an API key if your proxy requires one.
+5. Run **FileMaker: Connect**.
 
-### Connect with Direct Mode
+### Run your first query
 
-Direct mode connects the extension straight to your FileMaker Server. Best for individual use or development.
-
-1. Open Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`).
-2. Run **FileMaker: Add Connection Profile**.
-3. Enter a **Profile name** (e.g., "Dev Server").
-4. Select **Direct** authentication mode.
-5. Enter your **Server URL** (e.g., `https://fm.yourcompany.com`).
-6. Enter your **Database name** (e.g., `MyDatabase`).
-7. Accept the defaults for **API base path** (`/fmi/data`) and **API version** (`vLatest`) — change these only if your server uses a custom path.
-8. Enter your **Username** (the FileMaker account with fmrest privilege).
-9. Enter your **Password** (stored securely in VS Code SecretStorage, never written to disk).
-10. Run **FileMaker: Connect** and select the profile you just created.
-11. The **FileMaker Explorer** in the sidebar will populate with your layouts.
-
-### Connect with Proxy Mode
-
-Proxy mode routes requests through your own middleware endpoint. Recommended for teams, shared environments, or when you need custom auth handling.
-
-1. Open Command Palette.
-2. Run **FileMaker: Add Connection Profile**.
-3. Enter a **Profile name**.
-4. Select **Proxy** authentication mode.
-5. Enter your **Server URL** (the FileMaker server your proxy talks to).
-6. Enter your **Database name**.
-7. Accept the API path defaults.
-8. Enter your **Proxy endpoint URL** (e.g., `https://api.yourcompany.com/fm-proxy`).
-9. Enter your **API key** (optional — sent as `Bearer` token to your proxy).
-10. Run **FileMaker: Connect** and select the profile.
-
-### Your First Query
-
-Once connected:
-
-1. Run **FileMaker: Open Query Builder** from Command Palette.
-2. Select a **layout** from the dropdown.
-3. Enter find criteria in the JSON editor (e.g., `[{ "Status": "Active" }]`).
+1. Run **FileMaker: Open Query Builder**.
+2. Pick a layout.
+3. Add one or more find requests.
 4. Click **Run Find**.
-5. Results appear in the table below — export to JSON or CSV from there.
+5. Review the result table or export the result set.
 
-### Common Commands
+## Feature Highlights
 
-| Command | What it does |
-|---------|-------------|
-| **FileMaker: Add Connection Profile** | Create a new server connection |
-| **FileMaker: Connect** | Open a session with a saved profile |
-| **FileMaker: Disconnect** | Close the active session |
-| **FileMaker: Open Query Builder** | Visual query interface with export |
-| **FileMaker: Open Record Editor** | Edit a record with field validation |
-| **FileMaker: Create Record** | Create a new record on a layout |
-| **FileMaker: Delete Record** | Delete a record (with confirmation) |
-| **FileMaker: Open Script Runner** | Run FileMaker scripts with parameters |
-| **FileMaker: Capture Schema Snapshot** | Save layout metadata for diff tracking |
-| **FileMaker: Diff Schema Snapshots** | Compare two snapshots side by side |
-| **FileMaker: Batch Export (Find)** | Export large result sets to JSONL or CSV |
-| **FileMaker: Show Request History** | View past API requests |
-| **FileMaker: Toggle Offline Mode** | Switch to cached metadata (read-only) |
+### Query, records, and scripts
 
-All commands are available from the Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`) — type "FileMaker" to see the full list.
+- Run FileMaker find requests with JSON or the visual query builder
+- Open, create, edit, and delete records from within VS Code
+- Save reusable queries and execute them from the explorer
+- Run FileMaker scripts with parameters and inspect results
 
-## Features
+### Schema and generation
 
-### Records (Full CRUD)
+- Browse layout fields and value lists in the explorer
+- Capture schema snapshots and diff drift over time
+- Compare layouts across environments
+- Generate TypeScript types and snippets from layout metadata
 
-- **Find records** with JSON query syntax or the visual Query Builder
-- **Get record** by ID
-- **Create record** with field validation and confirmation
-- **Edit record** with draft preview, patch JSON, and save confirmation
-- **Delete record** with confirmation dialog (blocked for viewer role and untrusted workspaces)
-- **Duplicate record** preparation with auto-enter field filtering
+### Scale and operations
 
-### Query & Search
+- Export large result sets to JSONL or CSV
+- Run batch update jobs with dry-run defaults
+- Review request history, latency, re-auth events, and diagnostics
+- Use offline metadata mode when a server is unavailable
 
-- **Query Builder** webview with layout picker, sort, limit/offset, and export (JSON, CSV)
-- **Saved Queries** with workspace/global scope, import/export, and explorer integration
-- **Compound find queries** with multiple request rows and omit support
-- **Copy as curl/fetch** with auth header redaction
+### Security and governance
 
-### Schema & Metadata
+- Secrets stored only in VS Code `SecretStorage`
+- Authorization headers and credentials are redacted in logs and copy-as helpers
+- Workspace trust and role guards protect write workflows
+- Webviews use CSP nonces and do not call FileMaker endpoints directly
 
-- **Field metadata browser** under each layout in the explorer
-- **Value lists** extracted from layout metadata and displayed in the explorer
-- **Schema snapshots** with versioning, diffing, and drift detection
-- **Schema diff webview** with added/removed/changed field sections
-- **TypeScript type generation** from layout metadata
-- **Container field detection** and URL resolution
+## Common Commands
 
-### Scripts
-
-- **Script Runner** webview with layout/context selection and parameter input
-- Script result display and copy-as helpers
-
-### Portal & Related Records
-
-- **Portal data extraction** from records with field name parsing
-- **Portal metadata parsing** from layout info
-- **Portal-aware request parameters** with per-portal limit and offset
-
-### Batch Operations
-
-- **Batch export** with pagination (JSONL or CSV output)
-- **Batch update** from CSV/JSON with dry-run default and concurrency control
-- Job progress tracking, cancellation, and status bar integration
-
-### Global Fields
-
-- **Global field payload builder** for pre-request globals
-- **Global field parser** for reading globals from request bodies
-- Field name validation
-
-### Enterprise
-
-- **Environment sets** for grouped profile workflows
-- **Cross-environment comparison** with layout presence matrix and field-level drift
-- **Role-based access control** (viewer/developer/admin)
-- **Enterprise config** via `.vscode/filemaker.config.json`
-- **Offline metadata mode** with persistent cache
-
-### Diagnostics
-
-- **Request metrics** (latency, success/failure, re-auth, cache hits)
-- **Diagnostics dashboard** webview
-- **Request history** viewer
-- **Request tracing** with unique request IDs
-
-### Other
-
-- **Plugin registry** for safe extension points
-- **Workspace trust** integration (high-risk features disabled in untrusted workspaces)
-- **Loading skeletons** on all webviews (no empty form flash)
-- **Responsive CSS** with fluid scaling and ARIA accessibility attributes
-
-## Connection Profiles
-
-Two authentication modes:
-
-- **Direct** — extension connects to the FileMaker Data API directly
-- **Proxy** — extension connects through your proxy endpoint (recommended for teams)
-
-Profile fields: `serverUrl`, `database`, `authMode`, `username` (direct), `apiBasePath`, `apiVersionPath`, `proxyEndpoint` (proxy).
-
-Passwords and API keys are stored in VS Code `SecretStorage` (platform-level encryption). No credentials are written to settings or state files.
-
-## Security
-
-- Credentials stored only in `SecretStorage`
-- Webviews never call FileMaker endpoints directly — all API calls go through extension services
-- CSP nonces on all webview scripts and styles
-- Logs, history, and diagnostics use redaction (no passwords, tokens, or record payloads)
-- Copy-as snippets redact authorization headers by default
-- Role guard + workspace trust + offline mode block unsafe write paths
-
-## Settings
-
-| Setting | Description |
-|---------|------------|
-| `filemakerDataApiTools.requestTimeoutMs` | HTTP request timeout (default 15s) |
-| `filemaker.logging.level` | Log level: debug, info, warn, error |
-| `filemaker.savedQueries.scope` | Saved queries scope: workspace or global |
-| `filemaker.schema.cacheTtlSeconds` | Metadata cache TTL |
-| `filemaker.schema.snapshots.storage` | Snapshot storage: workspaceState or workspaceFiles |
-| `filemaker.schema.diagnostics.enabled` | Publish schema diffs to Problems panel |
-| `filemaker.typegen.outputDir` | TypeScript output folder |
-| `filemaker.batch.maxRecords` | Max records for batch export |
-| `filemaker.batch.concurrency` | Batch concurrency limit |
-| `filemaker.enterprise.mode` | Enable enterprise mode |
-| `filemaker.enterprise.role` | Enterprise role: viewer, developer, admin |
-| `filemaker.performance.mode` | Performance mode: standard or high-scale |
-| `filemaker.offline.mode` | Enable offline metadata mode |
-
-## Troubleshooting
-
-| Issue | Solution |
-|-------|---------|
-| HTTP 401 / token invalid | Reconnect the profile and re-enter credentials |
-| HTTP 403 / permission denied | Check FileMaker account privileges and role guard policy |
-| HTTP 404 / unsupported | Some servers don't expose all metadata/script routes — use fallback flows |
-| SSL/TLS errors | Verify certificate trust chain and server URL |
-| Features disabled | Trust the workspace to enable file generation, batch writes, and plugin loading |
-
-## Testing
-
-253 tests across 58 test files covering:
-
-- **Unit tests**: stores, utilities, services, commands, tree view, webview HTML, CSP
-- **Integration tests** (mocked HTTP): CRUD operations, 401 retry, batch export/update, environment compare, schema snapshots, scripts
-
-```bash
-npm test              # run all tests
-npm run test:coverage # run with coverage reporting
-```
+| Command | Purpose |
+| --- | --- |
+| `FileMaker: Add Connection Profile` | Create a new direct or proxy connection |
+| `FileMaker: Connect` | Start a session with a saved profile |
+| `FileMaker: Open Query Builder` | Build and run FileMaker find requests |
+| `FileMaker: Open Record Editor` | Edit a record with preview support |
+| `FileMaker: Create Record` | Create a new record on a layout |
+| `FileMaker: Delete Record` | Delete a record with confirmation |
+| `FileMaker: Capture Schema Snapshot` | Save metadata for later diffing |
+| `FileMaker: Diff Schema Snapshots` | Compare two snapshots side by side |
+| `FileMaker: Batch Export (Find)` | Export JSONL or CSV from a find request |
+| `FileMaker: Show Request History` | Review prior API requests and status |
 
 ## Development
 
 ```bash
 npm install
-npm run lint          # eslint with zero-warning enforcement
-npm run typecheck     # tsc --noEmit
-npm run build         # esbuild + webview copy
-npm test              # vitest
+npm run lint
+npm run typecheck
+npm test
+npm run package:check
 ```
 
-See also:
-- [User Guide](./docs/USER_GUIDE.md) — step-by-step setup and usage instructions
-- [ARCHITECTURE.md](./ARCHITECTURE.md)
-- [CONTRIBUTING.md](./CONTRIBUTING.md)
-- [SECURITY.md](./SECURITY.md)
-- [UPGRADE.md](./UPGRADE.md)
-- [Roadmap](../docs/roadmap.md)
+`npm run package:check` produces a VSIX in `artifacts/` using the same metadata and image URLs that the Marketplace pipeline uses.
+
+Additional project docs:
+
+- [User Guide](./docs/USER_GUIDE.md)
+- [Architecture](./ARCHITECTURE.md)
+- [Contributing](./CONTRIBUTING.md)
+- [Security](./SECURITY.md)
+- [Upgrade Guide](./UPGRADE.md)
 
 ## License
 

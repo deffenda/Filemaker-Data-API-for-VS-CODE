@@ -59,7 +59,13 @@ jobs:
         run: npm install
 
       - name: Package Extension
-        run: npm run package:check
+        run: npm run package:vsix
+
+      - name: Upload VSIX Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-vsix
+          path: artifacts/*.vsix
 
   publish:
     if: startsWith(github.ref, 'refs/tags/v')
@@ -77,10 +83,15 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Build
-        run: npm run build
+      - name: Download VSIX Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: extension-vsix
+          path: artifacts
 
       - name: Publish to Marketplace
-        run: npx @vscode/vsce publish --no-update-package-json
+        run: |
+          VSIX_PATH="$(echo artifacts/*.vsix)"
+          npx @vscode/vsce publish --packagePath "$VSIX_PATH" --no-update-package-json
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}

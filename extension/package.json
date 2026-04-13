@@ -3,17 +3,36 @@
   "displayName": "FileMaker Data API Tools",
   "description": "VS Code tools for working with the FileMaker Data API (fmrest).",
   "version": "1.0.0",
-  "publisher": "your-org",
+  "publisher": "deffenda",
   "license": "MIT",
+  "icon": "docs/marketplace/icon.png",
+  "galleryBanner": {
+    "color": "#081726",
+    "theme": "dark"
+  },
   "repository": {
     "type": "git",
-    "url": "https://example.com/your-org/filemaker-data-api-tools.git"
+    "url": "https://github.com/deffenda/filemaker-data-api-for-vs-code.git"
+  },
+  "homepage": "https://github.com/deffenda/filemaker-data-api-for-vs-code",
+  "bugs": {
+    "url": "https://github.com/deffenda/filemaker-data-api-for-vs-code/issues"
   },
   "engines": {
     "vscode": "^1.96.0"
   },
   "categories": [
+    "Data Science",
     "Other"
+  ],
+  "keywords": [
+    "filemaker",
+    "database",
+    "data api",
+    "claris",
+    "fmrest",
+    "query builder",
+    "schema"
   ],
   "activationEvents": [
     "onView:filemakerExplorer",
@@ -669,7 +688,8 @@
     "test:coverage": "vitest run --coverage",
     "vscode:prepublish": "npm run build",
     "typecheck": "tsc -p . --noEmit",
-    "package:check": "vsce package --allow-missing-repository --baseContentUrl https://example.com/your-org/filemaker-data-api-tools/blob/main --baseImagesUrl https://example.com/your-org/filemaker-data-api-tools/raw/main"
+    "package:vsix": "shx mkdir -p ../artifacts && vsce package --allow-missing-repository --baseContentUrl https://github.com/deffenda/filemaker-data-api-for-vs-code/blob/main/extension --baseImagesUrl https://raw.githubusercontent.com/deffenda/filemaker-data-api-for-vs-code/main/extension --out ../artifacts/filemaker-data-api-tools-${npm_package_version}.vsix",
+    "package:check": "npm run package:vsix"
   },
   "dependencies": {
     "axios": "1.15.0",

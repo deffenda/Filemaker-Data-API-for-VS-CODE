@@ -1,6 +1,15 @@
 {
-  "last_updated": "2026-04-13T00:49:48Z",
+  "last_updated": "2026-04-13T05:11:00Z",
   "summary": "Standards adoption",
   "next_action": "Complete pipeline wiring",
-  "discovered_issues": []
+  "discovered_issues": [
+    {
+      "issue": "Dirty worktree on branch codex/V1-marketplace-publishing with no active execution lease (execution_status=idle, execution_lease_expires_at is empty). Work may be orphaned or incomplete. Branch safety guard returned blocked/dirty_worktree.",
+      "severity": "high",
+      "action": "Investigate uncommitted changes on codex/V1-marketplace-publishing. Either commit and push to resume the task, or clean the worktree and reset execution state.",
+      "owner": "scheduled-audit",
+      "source": "repo-health-audit",
+      "detected_at": "2026-04-13T05:11:00Z"
+    }
+  ]
 }

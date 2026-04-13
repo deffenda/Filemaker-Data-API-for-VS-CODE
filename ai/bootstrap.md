@@ -94,7 +94,8 @@ Loop:
 9. If review passes and PR is merged:
    - If tasks remain in `ai/tasks.md` with status `pending`, set `ready_for_claude`.
    - If no tasks remain, set `done`.
-   - Claude reads `ready_for_claude`, marks the finished task `done`, advances `state/current_task.md` to the next task, and sets `ready_for_codex`.
+   - `watch-open-prs` automatically advances state to `ready_for_codex` for the next pending task after merge (no Claude action needed).
+   - If the next task needs re-planning or is marked `requires_claude_review: true`, state is set to `ready_for_claude` instead.
 10. Each task must pass lint + typecheck + test before the PR is opened.
 
 ## Standards reference

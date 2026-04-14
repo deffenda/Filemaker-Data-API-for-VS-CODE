@@ -5,3 +5,5 @@ build/
 runs/
 state/
 .git/
+
+tools/validators/

@@ -14,3 +14,6 @@ coverage
 
 # Risks are private — do not publish to GitHub
 !state/risks.json
+
+# Risks are private — do not publish to GitHub
+state/risks.json

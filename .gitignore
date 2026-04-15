@@ -13,5 +13,4 @@ build
 coverage
 
 # Risks are private — do not publish to GitHub
-
-# Pipeline state files must not be gitignored — they are required by the AI validator
+!state/risks.json

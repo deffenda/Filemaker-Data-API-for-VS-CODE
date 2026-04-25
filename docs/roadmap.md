@@ -149,13 +149,3 @@ Open-source, free connector for FileMaker Data API (fmrest) workflows.
 - OData connector for FileMaker OData API
 
 ---
-
-## How This Roadmap Drives Automation
-
-The overnight pipeline reads this file when all tasks in a batch are `done`. Claude uses it to plan the next version's work automatically:
-
-1. v0.6.0 tasks complete → Claude reads this roadmap → plans v0.7.0 tasks
-2. v0.7.0 tasks complete → Claude reads this roadmap → plans v0.8.0 tasks
-3. And so on through v1.0.0
-
-Each version maps to one planning batch. Claude produces `ai/plan.md`, `ai/tasks.md`, and `ai/acceptance.md` for the next version, sets `ready_for_codex`, and the pipeline continues.

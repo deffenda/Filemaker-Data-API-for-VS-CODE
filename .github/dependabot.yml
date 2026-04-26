@@ -1,0 +1,14 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    ignore:
+      # uuid >=9 has a breaking ESM-first redesign that the @vscode/vsce →
+      # @azure/identity → @azure/msal-node transitive chain (still on uuid@^8
+      # as of msal-node 5.1.4) cannot consume. Re-enable once msal-node
+      # publishes a release that requires uuid >=9.
+      - dependency-name: uuid
+        update-types:
+          - version-update:semver-major

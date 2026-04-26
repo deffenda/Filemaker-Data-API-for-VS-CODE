@@ -693,24 +693,24 @@
     "package:check": "npm run package:vsix"
   },
   "dependencies": {
-    "axios": "1.15.0",
+    "axios": "^1.15.0",
     "zod": "3.24.2"
   },
   "devDependencies": {
-    "@vscode/vsce": "^2.27.0",
     "@types/node": "^22.15.0",
     "@types/vscode": "^1.96.0",
     "@typescript-eslint/eslint-plugin": "^8.33.1",
     "@typescript-eslint/parser": "^8.33.1",
+    "@vitest/coverage-v8": "^2.1.8",
+    "@vscode/vsce": "^2.27.0",
+    "esbuild": "^0.25.0",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^10.1.2",
-    "esbuild": "^0.25.0",
     "nock": "^14.0.5",
     "prettier": "^3.5.3",
     "rimraf": "^6.0.1",
     "shx": "^0.4.0",
     "typescript": "^5.8.3",
-    "@vitest/coverage-v8": "^2.1.8",
     "vitest": "^2.1.8"
   }
 }

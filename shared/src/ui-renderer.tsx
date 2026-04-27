@@ -23,7 +23,7 @@ export function LayoutContainer({
   mode,
   onObjectAction,
   runtimeData
-}: LayoutRendererProps): JSX.Element {
+}: LayoutRendererProps): React.JSX.Element {
   const viewport = mode === 'runtime' ? runtimeData?.viewport : undefined;
   const containerWidth = viewport ? Math.max(1, Math.round(viewport.width)) : layout.canvas.width;
   const containerHeight = viewport ? Math.max(1, Math.round(viewport.height)) : layout.canvas.height;
@@ -78,7 +78,7 @@ function LayoutObjectRenderer({
   mode,
   onObjectAction,
   runtimeData
-}: LayoutObjectRendererProps): JSX.Element {
+}: LayoutObjectRendererProps): React.JSX.Element {
   const sharedStyle: React.CSSProperties = {
     position: 'absolute',
     left: object.x,
@@ -123,7 +123,7 @@ function ButtonControl(props: {
   style: React.CSSProperties;
   object: ButtonLayoutObject;
   onObjectAction?: (object: LayoutObject) => void;
-}): JSX.Element {
+}): React.JSX.Element {
   return (
     <button
       type="button"
@@ -149,7 +149,7 @@ function FieldControl(props: {
   object: FieldLayoutObject;
   mode: 'designer' | 'runtime';
   runtimeData?: RuntimeLayoutData;
-}): JSX.Element {
+}): React.JSX.Element {
   const { object, style } = props;
   const labelText = object.label?.trim().length ? object.label : object.fmFieldName;
   const runtimeValue = props.runtimeData?.fieldValues?.[object.fmFieldName];
@@ -230,7 +230,7 @@ function renderFieldDisplayControl(props: {
   mode: 'designer' | 'runtime';
   inputId: string;
   options: string[];
-}): JSX.Element {
+}): React.JSX.Element {
   const disabled = props.mode === 'designer';
   const baseControlStyle: React.CSSProperties = {
     border: '1px solid #90a3b8',
@@ -351,7 +351,7 @@ function PortalControl(props: {
   object: PortalLayoutObject;
   mode: 'designer' | 'runtime';
   runtimeData?: RuntimeLayoutData;
-}): JSX.Element {
+}): React.JSX.Element {
   const { object, style } = props;
   const runtimeRows = props.runtimeData?.portalRowsByObjectId?.[object.id];
   const rows = React.useMemo(() => {

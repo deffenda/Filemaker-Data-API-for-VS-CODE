@@ -142,7 +142,7 @@ interface ToolDragPayload {
   fieldName?: string;
 }
 
-export function App(): JSX.Element {
+export function App(): React.JSX.Element {
   const [layout, setLayout] = React.useState<LayoutDefinition>(() => createBlankLayout('Untitled Layout'));
   const [fields, setFields] = React.useState<string[]>([]);
   const [scripts, setScripts] = React.useState<string[]>([]);
@@ -157,11 +157,11 @@ export function App(): JSX.Element {
   const [marqueeRect, setMarqueeRect] = React.useState<Rect | undefined>();
 
   const layoutRef = React.useRef(layout);
-  const interactionRef = React.useRef<CanvasInteraction | undefined>();
+  const interactionRef = React.useRef<CanvasInteraction | undefined>(undefined);
   const interactionListenersRef = React.useRef<{
     onMove: (event: MouseEvent) => void;
     onUp: (event: MouseEvent) => void;
-  } | undefined>();
+  } | undefined>(undefined);
   const viewportRef = React.useRef<HTMLDivElement | null>(null);
   const surfaceRef = React.useRef<HTMLDivElement | null>(null);
 

@@ -23,7 +23,7 @@ export function RuntimeLayoutClient({
   layout,
   initialRecordId,
   initialRecordIndex
-}: RuntimeLayoutClientProps): JSX.Element {
+}: RuntimeLayoutClientProps): React.JSX.Element {
   const router = useRouter();
   const canvasHostRef = React.useRef<HTMLDivElement | null>(null);
   const [viewport, setViewport] = React.useState<{ width: number; height: number } | undefined>(undefined);

@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import type { JSX } from 'react';
 
 import { loadLayoutDefinition } from '../../../lib/layout-loader';
 import { RuntimeLayoutClient } from './runtime-layout-client';

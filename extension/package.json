@@ -697,7 +697,7 @@
     "zod": "3.24.2"
   },
   "devDependencies": {
-    "@types/node": "^22.15.0",
+    "@types/node": "^25.6.0",
     "@types/vscode": "^1.96.0",
     "@typescript-eslint/eslint-plugin": "^8.33.1",
     "@typescript-eslint/parser": "^8.33.1",

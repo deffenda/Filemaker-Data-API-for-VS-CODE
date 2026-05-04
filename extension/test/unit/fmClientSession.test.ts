@@ -136,7 +136,7 @@ describe('FMClient — proactive session refresh (#47)', () => {
     const profile = createProfile();
     await secretStore.setPassword(profile.id, 'pass');
 
-    let now = 3_000_000;
+    const now = 3_000_000;
     axios.request
       .mockResolvedValueOnce(mockSessionResponse('tok-1'))
       .mockResolvedValueOnce({ data: { response: {}, messages: [{ code: '0', message: 'OK' }] } } as AxiosResponse<Record<string, unknown>>);

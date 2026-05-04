@@ -195,6 +195,26 @@ export class SettingsService {
     return this.getConfiguration('filemaker').get<boolean>('telemetry.enabled', false);
   }
 
+  public getConnectBackoffPolicy(): {
+    maxRetries: number;
+    initialMs: number;
+    maxMs: number;
+    multiplier: number;
+  } {
+    const config = this.getConfiguration('filemaker');
+    const maxRetries = config.get<number>('connect.maxRetries', 3);
+    const initialMs = config.get<number>('connect.backoffInitialMs', 1_000);
+    const maxMs = config.get<number>('connect.backoffMaxMs', 30_000);
+    const multiplier = config.get<number>('connect.backoffMultiplier', 2);
+    return {
+      maxRetries: clamp(Number.isFinite(maxRetries) ? Math.round(maxRetries) : 3, 0, 10),
+      initialMs: clamp(Number.isFinite(initialMs) ? Math.round(initialMs) : 1_000, 100, 60_000),
+      maxMs: clamp(Number.isFinite(maxMs) ? Math.round(maxMs) : 30_000, 1_000, 300_000),
+      multiplier:
+        Number.isFinite(multiplier) && multiplier >= 1 ? Math.min(10, multiplier) : 2
+    };
+  }
+
   public getSecretsFallbackMode(): SecretFallbackMode {
     const configured = this.getConfiguration('filemaker').get<string>(
       'secrets.fallback',

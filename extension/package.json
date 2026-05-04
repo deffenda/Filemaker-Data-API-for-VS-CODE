@@ -678,6 +678,34 @@
           "default": false,
           "description": "Enable anonymous usage telemetry to help improve the extension. No personal data or FileMaker credentials are collected."
         },
+        "filemaker.connect.maxRetries": {
+          "type": "number",
+          "default": 3,
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Number of retries the FileMaker connect command performs on transient login failures (network errors, 5xx). 0 disables retry."
+        },
+        "filemaker.connect.backoffInitialMs": {
+          "type": "number",
+          "default": 1000,
+          "minimum": 100,
+          "maximum": 60000,
+          "description": "Initial delay (ms) before the first retry of a failed connect."
+        },
+        "filemaker.connect.backoffMaxMs": {
+          "type": "number",
+          "default": 30000,
+          "minimum": 1000,
+          "maximum": 300000,
+          "description": "Maximum delay (ms) the connect backoff will wait between retries."
+        },
+        "filemaker.connect.backoffMultiplier": {
+          "type": "number",
+          "default": 2,
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Exponential multiplier applied to the connect backoff delay between retries."
+        },
         "filemaker.secrets.fallback": {
           "type": "string",
           "enum": [

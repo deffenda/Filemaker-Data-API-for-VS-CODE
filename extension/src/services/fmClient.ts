@@ -64,6 +64,17 @@ interface ClientRequestControl {
 
 const DEFAULT_LAYOUT_TTL_MS = 60_000;
 const DEFAULT_TIMEOUT_MS = 15_000;
+const DEFAULT_SESSION_MAX_AGE_MS = 14 * 60 * 1000; // 14 minutes; FM Data API tokens expire at 15
+const DEFAULT_SESSION_REFRESH_LEAD_MS = 30 * 1000; // refresh 30s before nominal expiry
+
+export interface FMClientSessionOptions {
+  /** Treat the session token as expired after this many ms since issuance. Default 14m. */
+  maxAgeMs?: number;
+  /** Refresh proactively when remaining lifetime drops below this many ms. Default 30s. */
+  refreshLeadMs?: number;
+  /** Override Date.now for tests. */
+  now?: () => number;
+}
 
 export class FMClient {
   private readonly httpClient: AxiosInstance;
@@ -71,8 +82,12 @@ export class FMClient {
   private readonly layoutCache = new Map<string, LayoutCacheEntry>();
   private readonly layoutMetadataCache = new Map<string, Record<string, unknown>>();
   private readonly layoutMetadataEtags = new Map<string, string>();
+  private readonly tokenIssuedAt = new Map<string, number>();
   private readonly timeoutMs: number;
   private readonly logger: Pick<Logger, 'debug' | 'info' | 'warn' | 'error'>;
+  private readonly getSessionMaxAgeMs: () => number;
+  private readonly getSessionRefreshLeadMs: () => number;
+  private readonly now: () => number;
 
   public constructor(
     private readonly secretStore: SecretStore,
@@ -81,13 +96,37 @@ export class FMClient {
     httpClient?: AxiosInstance,
     proxyClient?: ProxyClient,
     private readonly historyRecorder?: RequestHistoryRecorder,
-    private readonly metricsRecorder?: RequestMetricsRecorder
+    private readonly metricsRecorder?: RequestMetricsRecorder,
+    sessionOptions?: FMClientSessionOptions | (() => FMClientSessionOptions)
   ) {
     this.logger = logger;
     this.timeoutMs = timeoutMs ?? DEFAULT_TIMEOUT_MS;
     this.httpClient = httpClient ?? axios.create({ timeout: this.timeoutMs });
     this.proxyClient =
       proxyClient ?? new ProxyClient(this.secretStore, this.logger, this.timeoutMs, this.httpClient);
+
+    const resolveOptions = (): FMClientSessionOptions => {
+      if (typeof sessionOptions === 'function') {
+        return sessionOptions() ?? {};
+      }
+      return sessionOptions ?? {};
+    };
+
+    this.getSessionMaxAgeMs = () => resolveOptions().maxAgeMs ?? DEFAULT_SESSION_MAX_AGE_MS;
+    this.getSessionRefreshLeadMs = () =>
+      resolveOptions().refreshLeadMs ?? DEFAULT_SESSION_REFRESH_LEAD_MS;
+    this.now = () => resolveOptions().now?.() ?? Date.now();
+  }
+
+  /** Visible for testing. Returns true if the in-memory issuance window indicates the token needs refresh. */
+  public shouldRefreshSession(profileId: string, now = this.now()): boolean {
+    const issuedAt = this.tokenIssuedAt.get(profileId);
+    if (issuedAt === undefined) {
+      return true; // no record of issuance — be safe and refresh
+    }
+    const ageMs = now - issuedAt;
+    const lifetimeMs = this.getSessionMaxAgeMs() - this.getSessionRefreshLeadMs();
+    return ageMs >= Math.max(0, lifetimeMs);
   }
 
   public async createSession(profile: ConnectionProfile, control?: ClientRequestControl): Promise<string> {
@@ -102,6 +141,7 @@ export class FMClient {
           const token = await this.proxyClient.createSession(profile, control?.signal);
           const normalizedToken = token ?? 'proxy-session';
           await this.secretStore.setSessionToken(profile.id, normalizedToken);
+          this.tokenIssuedAt.set(profile.id, this.now());
           this.invalidateProfileCache(profile.id);
           return normalizedToken;
         }
@@ -143,6 +183,7 @@ export class FMClient {
           }
 
           await this.secretStore.setSessionToken(profile.id, token);
+          this.tokenIssuedAt.set(profile.id, this.now());
           this.invalidateProfileCache(profile.id);
 
           return token;
@@ -195,6 +236,7 @@ export class FMClient {
           });
         } finally {
           await this.secretStore.deleteSessionToken(profile.id);
+          this.tokenIssuedAt.delete(profile.id);
           this.invalidateProfileCache(profile.id);
         }
       }
@@ -729,8 +771,14 @@ export class FMClient {
     control?: ClientRequestControl
   ): Promise<string> {
     const existing = await this.secretStore.getSessionToken(profile.id);
-    if (existing) {
+    if (existing && !this.shouldRefreshSession(profile.id)) {
       return existing;
+    }
+
+    if (existing) {
+      this.logger.debug('Proactively refreshing session token before request.', {
+        profileId: profile.id
+      });
     }
 
     return this.createSession(profile, control);
@@ -777,6 +825,7 @@ export class FMClient {
           requestId: trace?.requestId
         });
         await this.secretStore.deleteSessionToken(profile.id);
+        this.tokenIssuedAt.delete(profile.id);
         await this.createSession(profile, { signal: request.signal });
 
         return this.requestWithAuth(profile, request, false, trace);
@@ -850,6 +899,7 @@ export class FMClient {
           requestId: trace?.requestId
         });
         await this.secretStore.deleteSessionToken(profile.id);
+        this.tokenIssuedAt.delete(profile.id);
         await this.createSession(profile, { signal: request.signal });
 
         return this.requestWithAuthRaw(profile, request, false, trace);

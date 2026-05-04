@@ -716,6 +716,20 @@
           "default": "warn",
           "description": "Whether the connection wizard requires a successful Test Connection before Save. 'off' = no requirement; 'warn' = save with confirmation when untested or edits since last test; 'block' = save disabled until a successful test on the current values."
         },
+        "filemaker.session.maxAgeMinutes": {
+          "type": "number",
+          "default": 14,
+          "minimum": 1,
+          "maximum": 30,
+          "description": "Treat the FileMaker Data API session token as expired after this many minutes from issuance. Default 14 (FM tokens nominally expire at 15)."
+        },
+        "filemaker.session.refreshLeadSeconds": {
+          "type": "number",
+          "default": 30,
+          "minimum": 0,
+          "maximum": 300,
+          "description": "Refresh the session token proactively when this many seconds remain before nominal expiry. Set to 0 to disable proactive refresh and rely on 401-retry only."
+        },
         "filemaker.secrets.fallback": {
           "type": "string",
           "enum": [

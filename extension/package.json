@@ -706,6 +706,16 @@
           "maximum": 10,
           "description": "Exponential multiplier applied to the connect backoff delay between retries."
         },
+        "filemaker.connectionWizard.requireTestBeforeSave": {
+          "type": "string",
+          "enum": [
+            "off",
+            "warn",
+            "block"
+          ],
+          "default": "warn",
+          "description": "Whether the connection wizard requires a successful Test Connection before Save. 'off' = no requirement; 'warn' = save with confirmation when untested or edits since last test; 'block' = save disabled until a successful test on the current values."
+        },
         "filemaker.secrets.fallback": {
           "type": "string",
           "enum": [

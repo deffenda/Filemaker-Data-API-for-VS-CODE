@@ -37,6 +37,7 @@ interface RegisterCoreCommandDeps {
   onProfileDisconnected?: (profileId: string) => void;
   /** Resolved at call time so settings updates are picked up live. */
   getConnectBackoffPolicy?: () => BackoffPolicy;
+  getConnectionWizardTestPolicy?: () => 'off' | 'warn' | 'block';
 }
 
 function isRetryableConnectError(error: unknown): boolean {
@@ -85,7 +86,9 @@ export function registerCoreCommands(deps: RegisterCoreCommandDeps): vscode.Disp
         return;
       }
 
-      ConnectionWizardPanel.createOrShow(context, profileStore, secretStore, fmClient, logger);
+      ConnectionWizardPanel.createOrShow(context, profileStore, secretStore, fmClient, logger, undefined, {
+        getTestPolicy: deps.getConnectionWizardTestPolicy
+      });
     }),
 
     vscode.commands.registerCommand('filemakerDataApiTools.editConnectionProfile', async (arg: unknown) => {
@@ -101,7 +104,9 @@ export function registerCoreCommands(deps: RegisterCoreCommandDeps): vscode.Disp
         return;
       }
 
-      ConnectionWizardPanel.createOrShow(context, profileStore, secretStore, fmClient, logger, profile);
+      ConnectionWizardPanel.createOrShow(context, profileStore, secretStore, fmClient, logger, profile, {
+        getTestPolicy: deps.getConnectionWizardTestPolicy
+      });
     }),
 
     vscode.commands.registerCommand(

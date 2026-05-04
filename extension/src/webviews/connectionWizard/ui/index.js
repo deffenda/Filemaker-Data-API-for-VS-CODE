@@ -14,6 +14,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const statusEl = /** @type {HTMLElement} */ (document.getElementById('status'));
 
   let authMode = 'direct';
+  /** @type {'off'|'warn'|'block'} */
+  let testPolicy = 'warn';
+  /** @type {{state:'untested'|'success'|'failure'|'stale', message?:string, hash?:string}} */
+  let testState = { state: 'untested' };
+  let pendingConfirmedSave = false;
 
   // Mode toggle
   directBtn.addEventListener('click', () => {
@@ -22,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     proxyBtn.classList.remove('active');
     directFields.classList.add('visible');
     proxyFields.classList.remove('visible');
+    onFormChanged();
   });
 
   proxyBtn.addEventListener('click', () => {
@@ -30,11 +36,16 @@ document.addEventListener('DOMContentLoaded', () => {
     directBtn.classList.remove('active');
     proxyFields.classList.add('visible');
     directFields.classList.remove('visible');
+    onFormChanged();
   });
 
   // Initialize
   directBtn.classList.add('active');
   directFields.classList.add('visible');
+
+  // Track every input edit
+  form.addEventListener('input', onFormChanged);
+  form.addEventListener('change', onFormChanged);
 
   // Save
   saveBtn.addEventListener('click', () => {
@@ -43,10 +54,26 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    const currentHash = hashForm(data);
+    const guard = evaluateSaveGuard(currentHash);
+
+    if (guard === 'block') {
+      showStatus(
+        'error',
+        'Save blocked by policy: please run a successful Test Connection on the current values first.'
+      );
+      return;
+    }
+
+    if (guard === 'warn' && !pendingConfirmedSave) {
+      showConfirmation(currentHash);
+      return;
+    }
+
+    pendingConfirmedSave = false;
     saveBtn.disabled = true;
     saveBtn.textContent = 'Saving...';
     clearStatus();
-
     vscode.postMessage({ type: 'save', payload: data });
   });
 
@@ -72,6 +99,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     switch (message.type) {
+      case 'init':
+        if (message.testPolicy === 'off' || message.testPolicy === 'warn' || message.testPolicy === 'block') {
+          testPolicy = message.testPolicy;
+        }
+        renderTestState();
+        break;
+
       case 'saveSuccess':
         showStatus('success', message.message || 'Profile saved successfully.');
         saveBtn.disabled = false;
@@ -84,17 +118,27 @@ document.addEventListener('DOMContentLoaded', () => {
         saveBtn.textContent = 'Save Profile';
         break;
 
-      case 'testSuccess':
+      case 'testSuccess': {
+        const data = collectFormData();
+        const hash = data ? hashForm(data) : undefined;
+        testState = { state: 'success', message: message.message, hash };
         showStatus('success', message.message || 'Connection successful.');
+        renderTestState();
         testBtn.disabled = false;
         testBtn.textContent = 'Test Connection';
         break;
+      }
 
-      case 'testError':
+      case 'testError': {
+        const data = collectFormData();
+        const hash = data ? hashForm(data) : undefined;
+        testState = { state: 'failure', message: message.message, hash };
         showStatus('error', message.message || 'Connection failed.');
+        renderTestState();
         testBtn.disabled = false;
         testBtn.textContent = 'Test Connection';
         break;
+      }
 
       case 'loadProfile':
         populateForm(message.payload);
@@ -157,15 +201,16 @@ document.addEventListener('DOMContentLoaded', () => {
       directBtn.click();
       setFieldValue('username', profile.username || '');
     }
+    onFormChanged();
   }
 
   function getValue(id) {
-    const el = document.getElementById(id);
+    const el = /** @type {HTMLInputElement|null} */ (document.getElementById(id));
     return el ? el.value.trim() : '';
   }
 
   function setFieldValue(id, value) {
-    const el = document.getElementById(id);
+    const el = /** @type {HTMLInputElement|null} */ (document.getElementById(id));
     if (el) el.value = value;
   }
 
@@ -177,6 +222,99 @@ document.addEventListener('DOMContentLoaded', () => {
   function clearStatus() {
     statusEl.className = 'status';
     statusEl.textContent = '';
+  }
+
+  function onFormChanged() {
+    pendingConfirmedSave = false;
+    if (testState.state === 'success' || testState.state === 'failure') {
+      const data = collectFormData();
+      const newHash = data ? hashForm(data) : undefined;
+      if (newHash !== testState.hash) {
+        testState = { state: 'stale', message: testState.message };
+      }
+    }
+    renderTestState();
+  }
+
+  function renderTestState() {
+    let badge = document.getElementById('testBadge');
+    if (!badge) {
+      badge = document.createElement('div');
+      badge.id = 'testBadge';
+      badge.className = 'test-badge';
+      const buttonsContainer = saveBtn.parentElement;
+      if (buttonsContainer) {
+        buttonsContainer.insertBefore(badge, saveBtn);
+      } else {
+        document.body.appendChild(badge);
+      }
+    }
+
+    let label = '';
+    let cls = 'test-badge';
+    switch (testState.state) {
+      case 'untested':
+        label = testPolicy === 'off' ? '' : '⚪ Connection not tested';
+        cls += ' untested';
+        break;
+      case 'success':
+        label = '🟢 Test passed';
+        cls += ' success';
+        break;
+      case 'failure':
+        label = `🔴 Test failed${testState.message ? ': ' + testState.message : ''}`;
+        cls += ' failure';
+        break;
+      case 'stale':
+        label = '🟡 Edits since last test';
+        cls += ' stale';
+        break;
+    }
+    badge.textContent = label;
+    badge.className = cls;
+    badge.style.display = label ? '' : 'none';
+  }
+
+  /**
+   * @param {string} hash
+   * @returns {'ok'|'warn'|'block'}
+   */
+  function evaluateSaveGuard(hash) {
+    if (testPolicy === 'off') return 'ok';
+    const passed = testState.state === 'success' && testState.hash === hash;
+    if (passed) return 'ok';
+    return testPolicy === 'block' ? 'block' : 'warn';
+  }
+
+  function showConfirmation(hash) {
+    const confirmed = window.confirm(
+      'You have not run a successful Test Connection on the current values. Save anyway?'
+    );
+    if (confirmed) {
+      pendingConfirmedSave = true;
+      saveBtn.click();
+    }
+  }
+
+  /**
+   * @param {Record<string, unknown>} data
+   * @returns {string}
+   */
+  function hashForm(data) {
+    // Stable, order-independent hash. Excludes secrets so the form is considered
+    // "tested" even after the user re-enters a password (tests didn't change auth values
+    // unless the auth fields themselves changed).
+    const subset = {
+      name: data.name,
+      authMode: data.authMode,
+      serverUrl: data.serverUrl,
+      database: data.database,
+      apiBasePath: data.apiBasePath,
+      apiVersionPath: data.apiVersionPath,
+      username: data.username,
+      proxyEndpoint: data.proxyEndpoint
+    };
+    return JSON.stringify(subset);
   }
 
   // Tell the extension we're ready

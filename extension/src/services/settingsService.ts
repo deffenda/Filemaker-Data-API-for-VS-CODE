@@ -215,6 +215,17 @@ export class SettingsService {
     };
   }
 
+  public getConnectionWizardTestPolicy(): 'off' | 'warn' | 'block' {
+    const configured = this.getConfiguration('filemaker').get<string>(
+      'connectionWizard.requireTestBeforeSave',
+      'warn'
+    );
+    if (configured === 'off' || configured === 'block') {
+      return configured;
+    }
+    return 'warn';
+  }
+
   public getSecretsFallbackMode(): SecretFallbackMode {
     const configured = this.getConfiguration('filemaker').get<string>(
       'secrets.fallback',

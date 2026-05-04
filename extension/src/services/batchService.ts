@@ -5,6 +5,7 @@ import type { FMClient } from './fmClient';
 import { FMClientError } from './errors';
 import { AdaptiveConcurrency } from '../performance/adaptiveConcurrency';
 import { CircuitBreaker } from '../performance/circuitBreaker';
+import type { CircuitBreakerRegistry } from '../performance/circuitBreakerRegistry';
 import type {
   BatchExportFormat,
   BatchExportOptions,
@@ -25,6 +26,7 @@ interface BatchServiceOptions {
   getConcurrency?: () => number;
   getDryRunDefault?: () => boolean;
   getPerformanceMode?: () => PerformanceMode;
+  circuitBreakerRegistry?: CircuitBreakerRegistry;
 }
 
 export class BatchService {
@@ -32,12 +34,14 @@ export class BatchService {
   private readonly getConcurrency: () => number;
   private readonly getDryRunDefault: () => boolean;
   private readonly getPerformanceMode: () => PerformanceMode;
+  private readonly circuitBreakerRegistry?: CircuitBreakerRegistry;
 
   public constructor(private readonly fmClient: FMClient, options?: BatchServiceOptions) {
     this.getMaxRecords = options?.getMaxRecords ?? (() => 10_000);
     this.getConcurrency = options?.getConcurrency ?? (() => 4);
     this.getDryRunDefault = options?.getDryRunDefault ?? (() => true);
     this.getPerformanceMode = options?.getPerformanceMode ?? (() => 'standard');
+    this.circuitBreakerRegistry = options?.circuitBreakerRegistry;
   }
 
   public getDefaultBatchUpdateOptions(): BatchUpdateOptions {
@@ -162,10 +166,18 @@ export class BatchService {
       max: maxConcurrency,
       targetLatencyMs: performanceMode === 'high-scale' ? 1400 : 900
     });
+    const registry = this.circuitBreakerRegistry;
+    const breakerName = `batchUpdate:${profile.id}:${layout}`;
     const breaker = new CircuitBreaker({
       failureThreshold: performanceMode === 'high-scale' ? 6 : 4,
-      openMs: performanceMode === 'high-scale' ? 6_000 : 4_000
+      openMs: performanceMode === 'high-scale' ? 6_000 : 4_000,
+      onTransition: registry
+        ? (transition) => registry.recordTransition(breakerName, transition)
+        : undefined
     });
+    if (registry) {
+      registry.register(breakerName, breaker);
+    }
 
     const inFlight = new Set<Promise<void>>();
 
@@ -220,6 +232,10 @@ export class BatchService {
       }
 
       await Promise.race(inFlight);
+    }
+
+    if (registry) {
+      registry.unregister(breakerName);
     }
 
     return {

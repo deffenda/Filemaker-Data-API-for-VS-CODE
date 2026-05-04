@@ -75,6 +75,7 @@ describe('FMClient — proactive session refresh (#47)', () => {
     );
 
     await client.listLayouts(profile); // creates session + lists
+    client.invalidateProfileCache(profile.id); // bypass listLayouts cache
     now += 1_000; // 1s elapsed
     await client.listLayouts(profile); // should reuse token
 
@@ -114,6 +115,7 @@ describe('FMClient — proactive session refresh (#47)', () => {
     now += 51_000;
     expect(client.shouldRefreshSession(profile.id, now)).toBe(true);
 
+    client.invalidateProfileCache(profile.id); // bypass listLayouts cache
     await client.listLayouts(profile); // should refresh to tok-B before listing
 
     // call sequence: createSession A, list, createSession B, list = 4

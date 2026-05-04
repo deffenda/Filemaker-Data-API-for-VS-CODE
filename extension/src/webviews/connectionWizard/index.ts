@@ -13,6 +13,13 @@ import {
 } from '../../utils/jsonValidate';
 import { toUserErrorMessage } from '../../utils/errorUx';
 
+export type ConnectionWizardTestPolicy = 'off' | 'warn' | 'block';
+
+interface ConnectionWizardOptions {
+  /** Resolved at message time so settings updates flow live. */
+  getTestPolicy?: () => ConnectionWizardTestPolicy;
+}
+
 interface WizardFormData {
   name: string;
   authMode: 'direct' | 'proxy';
@@ -43,7 +50,8 @@ export class ConnectionWizardPanel {
     private readonly secretStore: SecretStore,
     private readonly fmClient: FMClient,
     private readonly logger: Logger,
-    editingProfile?: ConnectionProfile
+    editingProfile?: ConnectionProfile,
+    private readonly options: ConnectionWizardOptions = {}
   ) {
     this.editingProfile = editingProfile;
     this.panel.webview.html = this.getHtmlForWebview(this.panel.webview);
@@ -63,7 +71,8 @@ export class ConnectionWizardPanel {
     secretStore: SecretStore,
     fmClient: FMClient,
     logger: Logger,
-    editingProfile?: ConnectionProfile
+    editingProfile?: ConnectionProfile,
+    options: ConnectionWizardOptions = {}
   ): void {
     if (ConnectionWizardPanel.currentPanel) {
       ConnectionWizardPanel.currentPanel.editingProfile = editingProfile;
@@ -92,7 +101,8 @@ export class ConnectionWizardPanel {
       secretStore,
       fmClient,
       logger,
-      editingProfile
+      editingProfile,
+      options
     );
   }
 
@@ -115,6 +125,7 @@ export class ConnectionWizardPanel {
 
     switch (incoming.type) {
       case 'ready':
+        await this.sendInit();
         await this.sendLoadProfile();
         break;
       case 'save':
@@ -124,6 +135,13 @@ export class ConnectionWizardPanel {
         await this.handleTestConnection(incoming.payload);
         break;
     }
+  }
+
+  private async sendInit(): Promise<void> {
+    await this.panel.webview.postMessage({
+      type: 'init',
+      testPolicy: this.options.getTestPolicy?.() ?? 'warn'
+    });
   }
 
   private async sendLoadProfile(): Promise<void> {

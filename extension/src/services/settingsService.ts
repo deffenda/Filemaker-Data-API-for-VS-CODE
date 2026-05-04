@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 
 import type { EnterpriseRole, PerformanceMode, SavedQueryScope, SchemaSnapshotStorage } from '../types/fm';
 import type { LogLevel } from './logger';
+import type { SecretFallbackMode } from './secretStore';
 
 interface SettingsServiceOptions {
   getConfiguration?: (section?: string) => vscode.WorkspaceConfiguration;
@@ -184,6 +185,17 @@ export class SettingsService {
 
   public isTelemetryEnabled(): boolean {
     return this.getConfiguration('filemaker').get<boolean>('telemetry.enabled', false);
+  }
+
+  public getSecretsFallbackMode(): SecretFallbackMode {
+    const configured = this.getConfiguration('filemaker').get<string>(
+      'secrets.fallback',
+      'vscode-only'
+    );
+    if (configured === 'workspace-state' || configured === 'disabled') {
+      return configured;
+    }
+    return 'vscode-only';
   }
 }
 

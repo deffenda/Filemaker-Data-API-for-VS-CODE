@@ -67,6 +67,10 @@ window.addEventListener('message', (event) => {
       break;
     case 'layoutsLoaded':
       applyLayouts(message.payload);
+      requestFieldNamesForCurrentLayout();
+      break;
+    case 'fieldNamesLoaded':
+      renderFieldNames(message.payload);
       break;
     case 'queryResult':
       renderQueryResult(message.payload);
@@ -95,6 +99,12 @@ profileSelect.addEventListener('change', () => {
   const profileId = profileSelect.value;
   requestLayouts(profileId);
 });
+
+if (layoutSelect) {
+  layoutSelect.addEventListener('change', () => {
+    requestFieldNamesForCurrentLayout();
+  });
+}
 
 runButton.addEventListener('click', () => {
   const payload = collectPayload();
@@ -780,6 +790,80 @@ function renderVirtualizedTable(records, columns) {
 function setStatus(message, isError = false) {
   status.textContent = message;
   status.classList.toggle('error', isError);
+}
+
+function requestFieldNamesForCurrentLayout() {
+  const profileId = profileSelect ? profileSelect.value : '';
+  const layout = layoutSelect ? layoutSelect.value : '';
+  if (!profileId || !layout) {
+    renderFieldNames({ profileId: '', layout: '', fieldNames: [] });
+    return;
+  }
+  vscode.postMessage({ type: 'loadFieldNames', profileId, layout });
+}
+
+function renderFieldNames(payload) {
+  let panel = document.getElementById('fieldNamesPanel');
+  if (!panel) {
+    const findContainer = findJson ? findJson.parentElement : null;
+    if (!findContainer) return;
+    panel = document.createElement('div');
+    panel.id = 'fieldNamesPanel';
+    panel.className = 'field-names-panel';
+    findContainer.insertBefore(panel, findJson);
+  }
+
+  const names = Array.isArray(payload && payload.fieldNames) ? payload.fieldNames : [];
+  const error = payload && payload.error;
+  panel.innerHTML = '';
+
+  if (error) {
+    const msg = document.createElement('div');
+    msg.className = 'field-names-error';
+    msg.textContent = `Layout fields unavailable: ${error}`;
+    panel.appendChild(msg);
+    return;
+  }
+
+  if (names.length === 0) {
+    panel.style.display = 'none';
+    return;
+  }
+
+  panel.style.display = '';
+
+  const header = document.createElement('div');
+  header.className = 'field-names-header';
+  header.textContent = `Layout fields (${names.length}) — click to insert`;
+  panel.appendChild(header);
+
+  const chipRow = document.createElement('div');
+  chipRow.className = 'field-names-chips';
+  for (const name of names) {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'field-name-chip';
+    chip.textContent = name;
+    chip.title = `Insert "${name}" into the find JSON`;
+    chip.addEventListener('click', () => insertFieldNameIntoFindJson(name));
+    chipRow.appendChild(chip);
+  }
+  panel.appendChild(chipRow);
+}
+
+function insertFieldNameIntoFindJson(fieldName) {
+  if (!findJson) return;
+  const insertion = `"${fieldName}": ""`;
+  const start = findJson.selectionStart ?? findJson.value.length;
+  const end = findJson.selectionEnd ?? findJson.value.length;
+  const before = findJson.value.slice(0, start);
+  const after = findJson.value.slice(end);
+  const needsComma = /[}\]"]\s*$/.test(before.trim());
+  const prefix = needsComma ? ', ' : '';
+  findJson.value = `${before}${prefix}${insertion}${after}`;
+  const cursor = (before + prefix + insertion).length - 1; // place caret between the empty quotes
+  findJson.focus();
+  findJson.setSelectionRange(cursor, cursor);
 }
 
 vscode.postMessage({ type: 'ready' });

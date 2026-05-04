@@ -8,22 +8,22 @@ class FailingSecretStorage {
   public getFailures = 0;
   public deleteFailures = 0;
 
-  public async storeSecret(_key: string, _value: string): Promise<void> {
+  public async storeSecret(): Promise<void> {
     this.storeFailures += 1;
     throw new Error('SecretStorage unavailable: store');
   }
 
-  public async store(_key: string, _value: string): Promise<void> {
+  public async store(): Promise<void> {
     this.storeFailures += 1;
     throw new Error('SecretStorage unavailable: store');
   }
 
-  public async get(_key: string): Promise<string | undefined> {
+  public async get(): Promise<string | undefined> {
     this.getFailures += 1;
     throw new Error('SecretStorage unavailable: get');
   }
 
-  public async delete(_key: string): Promise<void> {
+  public async delete(): Promise<void> {
     this.deleteFailures += 1;
     throw new Error('SecretStorage unavailable: delete');
   }

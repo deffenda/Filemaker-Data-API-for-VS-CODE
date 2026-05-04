@@ -13,7 +13,8 @@ describe('showErrorWithDetails', () => {
 
     expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
       'Something broke',
-      'Details…'
+      'Details…',
+      'Copy as Bug Report'
     );
   });
 
@@ -24,7 +25,8 @@ describe('showErrorWithDetails', () => {
 
     expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
       expect.any(String),
-      'Details…'
+      'Details…',
+      'Copy as Bug Report'
     );
   });
 
@@ -39,14 +41,14 @@ describe('showErrorWithDetails', () => {
     expect(logger.error).toHaveBeenCalledWith('Custom log', expect.any(Object));
   });
 
-  it('opens JSON document when Details action is selected', async () => {
+  it('opens markdown document when Details action is selected', async () => {
     vi.mocked(vscode.window.showErrorMessage).mockResolvedValue('Details…' as never);
 
     await showErrorWithDetails(new Error('fail'));
 
     expect(vscode.workspace.openTextDocument).toHaveBeenCalledWith(
       expect.objectContaining({
-        language: 'json',
+        language: 'markdown',
         content: expect.any(String)
       })
     );

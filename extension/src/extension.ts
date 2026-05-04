@@ -86,7 +86,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     undefined,
     undefined,
     historyStore,
-    metricsStore
+    metricsStore,
+    () => ({
+      maxAgeMs: settingsService.getSessionMaxAgeMs(),
+      refreshLeadMs: settingsService.getSessionRefreshLeadMs()
+    })
   );
   const schemaService = new SchemaService(fmClient, logger, {
     getCacheTtlMs: () =>

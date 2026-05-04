@@ -226,6 +226,22 @@ export class SettingsService {
     return 'warn';
   }
 
+  public getSessionMaxAgeMs(): number {
+    const minutes = this.getConfiguration('filemaker').get<number>('session.maxAgeMinutes', 14);
+    if (!Number.isFinite(minutes)) {
+      return 14 * 60_000;
+    }
+    return clamp(Math.round(minutes), 1, 30) * 60_000;
+  }
+
+  public getSessionRefreshLeadMs(): number {
+    const seconds = this.getConfiguration('filemaker').get<number>('session.refreshLeadSeconds', 30);
+    if (!Number.isFinite(seconds) || seconds < 0) {
+      return 30_000;
+    }
+    return clamp(Math.round(seconds), 0, 300) * 1_000;
+  }
+
   public getSecretsFallbackMode(): SecretFallbackMode {
     const configured = this.getConfiguration('filemaker').get<string>(
       'secrets.fallback',

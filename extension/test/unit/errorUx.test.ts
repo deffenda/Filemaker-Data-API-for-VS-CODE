@@ -62,6 +62,35 @@ describe('showErrorWithDetails', () => {
 
     expect(vscode.workspace.openTextDocument).not.toHaveBeenCalled();
   });
+
+  it('copies report to clipboard when Copy as Bug Report is selected', async () => {
+    vi.mocked(vscode.window.showErrorMessage).mockResolvedValue('Copy as Bug Report' as never);
+
+    await showErrorWithDetails(new Error('boom'));
+
+    expect(vscode.env.clipboard.writeText).toHaveBeenCalledWith(
+      expect.stringContaining('# FileMaker Data API — Error Report')
+    );
+    // No document is opened on the copy path.
+    expect(vscode.workspace.openTextDocument).not.toHaveBeenCalled();
+  });
+
+  it('does not render the report when toast is dismissed (deferred rendering)', async () => {
+    vi.mocked(vscode.window.showErrorMessage).mockResolvedValue(undefined as never);
+
+    // Pass a non-serializable value via a getter that throws — would crash if rendered eagerly.
+    const evil = new Error('toxic');
+    Object.defineProperty(evil, 'stack', {
+      get() {
+        throw new Error('do not access');
+      }
+    });
+
+    await expect(showErrorWithDetails(evil)).resolves.toBeUndefined();
+    // Clipboard and document remain untouched because we only render on action.
+    expect(vscode.env.clipboard.writeText).not.toHaveBeenCalled();
+    expect(vscode.workspace.openTextDocument).not.toHaveBeenCalled();
+  });
 });
 
 describe('toUserErrorMessage', () => {

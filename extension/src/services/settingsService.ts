@@ -215,6 +215,17 @@ export class SettingsService {
     };
   }
 
+  public getConnectionWizardTestPolicy(): 'off' | 'warn' | 'block' {
+    const configured = this.getConfiguration('filemaker').get<string>(
+      'connectionWizard.requireTestBeforeSave',
+      'warn'
+    );
+    if (configured === 'off' || configured === 'block') {
+      return configured;
+    }
+    return 'warn';
+  }
+
   public getSessionMaxAgeMs(): number {
     const minutes = this.getConfiguration('filemaker').get<number>('session.maxAgeMinutes', 14);
     if (!Number.isFinite(minutes)) {

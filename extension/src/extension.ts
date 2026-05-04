@@ -37,6 +37,7 @@ import { MetricsStore } from './diagnostics/metricsStore';
 import { OfflineModeService } from './offline/offlineModeService';
 import { PluginRegistry } from './plugins/pluginRegistry';
 import { FMExplorerProvider } from './views/fmExplorer';
+import { OfflineStatusBar } from './views/offlineStatusBar';
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const settingsService = new SettingsService();
@@ -270,7 +271,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     jobsStatusBar.text = `$(sync~spin) FM Job: ${running.name} ${running.progress}%`;
   });
 
+  const offlineStatusBar = new OfflineStatusBar(offlineModeService, {
+    getStaleHours: () => settingsService.getOfflineStaleCacheWarnHours()
+  });
+  offlineStatusBar.start();
+
   context.subscriptions.push(
+    offlineStatusBar,
     treeViewDisposable,
     ...coreCommandDisposables,
     ...savedQueryDisposables,

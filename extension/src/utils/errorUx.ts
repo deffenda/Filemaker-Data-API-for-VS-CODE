@@ -147,15 +147,20 @@ export function renderErrorReport(normalized: NormalizedError, raw?: unknown): s
   return lines.join('\n');
 }
 
+function escapeMarkdownTableCell(value: string): string {
+  // Escape backslashes first so \\ stays \\ and stand-alone | becomes \|.
+  return value.replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\n/g, ' ');
+}
+
 function formatChainRow(entry: RequestChainEntry): string {
   const cells = [
     String(entry.attempt),
-    entry.method ?? '',
-    entry.url ?? '',
+    escapeMarkdownTableCell(entry.method ?? ''),
+    escapeMarkdownTableCell(entry.url ?? ''),
     entry.status !== undefined ? String(entry.status) : '',
     entry.elapsedMs !== undefined ? `${entry.elapsedMs}ms` : '',
-    entry.at ?? '',
-    (entry.note ?? '').replace(/\|/g, '\\|')
+    escapeMarkdownTableCell(entry.at ?? ''),
+    escapeMarkdownTableCell(entry.note ?? '')
   ];
   return `| ${cells.join(' | ')} |`;
 }

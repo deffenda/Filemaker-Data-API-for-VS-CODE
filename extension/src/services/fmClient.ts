@@ -83,6 +83,7 @@ export class FMClient {
   private readonly layoutMetadataCache = new Map<string, Record<string, unknown>>();
   private readonly layoutMetadataEtags = new Map<string, string>();
   private readonly tokenIssuedAt = new Map<string, number>();
+  private readonly inFlightRefresh = new Map<string, Promise<string>>();
   private readonly timeoutMs: number;
   private readonly logger: Pick<Logger, 'debug' | 'info' | 'warn' | 'error'>;
   private readonly getSessionMaxAgeMs: () => number;
@@ -118,14 +119,39 @@ export class FMClient {
     this.now = () => resolveOptions().now?.() ?? Date.now();
   }
 
-  /** Visible for testing. Returns true if the in-memory issuance window indicates the token needs refresh. */
+  /**
+   * Visible for testing. Returns true if the in-memory issuance window indicates the token needs refresh.
+   *
+   * Behavior:
+   * - If `refreshLeadMs` is 0, proactive timed refresh is disabled (rely on 401-retry only).
+   * - If `issuedAt` is unknown (e.g., extension restart), reuse the persisted token instead of forcing
+   *   refresh — the 401-retry path handles real expiry.
+   * - Clock skew (negative ageMs) is treated as 0 to prevent extending lifetime via clock jumps.
+   * - If `refreshLeadMs >= maxAgeMs`, lifetime is clamped to maxAgeMs to avoid infinite refresh loops.
+   */
   public shouldRefreshSession(profileId: string, now = this.now()): boolean {
+    const refreshLeadMs = this.getSessionRefreshLeadMs();
+
+    // Setting contract: 0 disables proactive refresh.
+    if (refreshLeadMs <= 0) {
+      return false;
+    }
+
     const issuedAt = this.tokenIssuedAt.get(profileId);
     if (issuedAt === undefined) {
-      return true; // no record of issuance — be safe and refresh
+      // No issuance record (e.g., after extension restart). Trust the persisted token
+      // and let the 401-retry path catch real expiry. This prevents orphaning sessions
+      // on every reload.
+      return false;
     }
-    const ageMs = now - issuedAt;
-    const lifetimeMs = this.getSessionMaxAgeMs() - this.getSessionRefreshLeadMs();
+
+    // Clock skew guard: negative ageMs (clock moved backwards) is treated as 0.
+    const ageMs = Math.max(0, now - issuedAt);
+
+    // Infinite-loop guard: if lead >= maxAge, fall back to refreshing only after maxAge elapses.
+    const maxAgeMs = this.getSessionMaxAgeMs();
+    const lifetimeMs = refreshLeadMs >= maxAgeMs ? maxAgeMs : maxAgeMs - refreshLeadMs;
+
     return ageMs >= Math.max(0, lifetimeMs);
   }
 
@@ -218,6 +244,10 @@ export class FMClient {
           if (isProxyProfile(profile)) {
             await this.proxyClient.deleteSession(profile, control?.signal);
           } else {
+            // Use the existing token directly. Without skipProactiveRefresh, an in-flight
+            // refresh window during disconnect could create a new session, then this DELETE
+            // would target the old token while authenticating with the new one — orphaning
+            // the new server-side session.
             await this.requestWithAuth<Record<string, unknown>>(
               profile,
               {
@@ -226,7 +256,8 @@ export class FMClient {
                 signal: control?.signal
               },
               false,
-              trace
+              trace,
+              { skipProactiveRefresh: true }
             );
           }
         } catch (error) {
@@ -768,11 +799,29 @@ export class FMClient {
 
   private async ensureSessionToken(
     profile: ConnectionProfile,
-    control?: ClientRequestControl
+    control?: ClientRequestControl,
+    options?: { skipProactiveRefresh?: boolean }
   ): Promise<string> {
     const existing = await this.secretStore.getSessionToken(profile.id);
-    if (existing && !this.shouldRefreshSession(profile.id)) {
+
+    // Allow callers (e.g., deleteSession) to opt out of proactive refresh so they can use
+    // the existing token rather than creating a new session that gets orphaned on the server.
+    const skipProactive = options?.skipProactiveRefresh === true;
+
+    if (existing && (skipProactive || !this.shouldRefreshSession(profile.id))) {
       return existing;
+    }
+
+    if (!existing && skipProactive) {
+      // Fall through to createSession — there's no token to delete.
+    }
+
+    // Per-profile mutex to coalesce concurrent refreshes. Without this, parallel requests
+    // each call createSession, creating multiple FM sessions where only the last persisted
+    // token is reused — orphaning the rest until server timeout.
+    const inFlight = this.inFlightRefresh.get(profile.id);
+    if (inFlight) {
+      return inFlight;
     }
 
     if (existing) {
@@ -781,20 +830,27 @@ export class FMClient {
       });
     }
 
-    return this.createSession(profile, control);
+    const refreshPromise = this.createSession(profile, control).finally(() => {
+      this.inFlightRefresh.delete(profile.id);
+    });
+
+    this.inFlightRefresh.set(profile.id, refreshPromise);
+
+    return refreshPromise;
   }
 
   private async requestWithAuth<TResponse extends Record<string, unknown>>(
     profile: ConnectionProfile,
     request: RequestOptions,
     retryOn401 = true,
-    trace?: RequestTrace
+    trace?: RequestTrace,
+    authOptions?: { skipProactiveRefresh?: boolean }
   ): Promise<DataApiEnvelope<TResponse>> {
     if (trace) {
       trace.endpoint = `${request.method} ${request.path}`;
     }
 
-    const token = await this.ensureSessionToken(profile, { signal: request.signal });
+    const token = await this.ensureSessionToken(profile, { signal: request.signal }, authOptions);
 
     try {
       const config: AxiosRequestConfig = {

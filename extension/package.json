@@ -79,6 +79,7 @@
     "onCommand:filemakerDataApiTools.exportEnvironmentComparisonReport",
     "onCommand:filemakerDataApiTools.openEnvironmentSetJson",
     "onCommand:filemakerDataApiTools.openDiagnosticsDashboard",
+    "onCommand:filemakerDataApiTools.showCircuitBreakerStatus",
     "onCommand:filemakerDataApiTools.reloadPlugins",
     "onCommand:filemakerDataApiTools.listActivePlugins",
     "onCommand:filemakerDataApiTools.toggleOfflineMode",
@@ -276,6 +277,10 @@
       {
         "command": "filemakerDataApiTools.openDiagnosticsDashboard",
         "title": "FileMaker: Open Diagnostics Dashboard"
+      },
+      {
+        "command": "filemakerDataApiTools.showCircuitBreakerStatus",
+        "title": "FileMaker: Show Circuit Breaker Status"
       },
       {
         "command": "filemakerDataApiTools.reloadPlugins",

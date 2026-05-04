@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 
 import { registerBatchCommands } from './commands/batch';
+import { registerCircuitBreakerCommands } from './commands/circuitBreaker';
 import { registerDiagnosticsCommands } from './commands/diagnostics';
 import { registerEnterpriseCommands } from './commands/enterprise';
 import { registerFmWebProjectCommands } from './commands/fmWebProject';
@@ -35,6 +36,7 @@ import { EnvironmentCompareService } from './enterprise/environmentCompareServic
 import { RoleGuard } from './enterprise/roleGuard';
 import { MetricsStore } from './diagnostics/metricsStore';
 import { OfflineModeService } from './offline/offlineModeService';
+import { CircuitBreakerRegistry } from './performance/circuitBreakerRegistry';
 import { PluginRegistry } from './plugins/pluginRegistry';
 import { FMExplorerProvider } from './views/fmExplorer';
 import { OfflineStatusBar } from './views/offlineStatusBar';
@@ -104,6 +106,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     getWorkspaceRoot: () => vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
     isWorkspaceTrusted: () => vscode.workspace.isTrusted
   });
+  const circuitBreakerRegistry = new CircuitBreakerRegistry();
   const batchService = new BatchService(fmClient, {
     getMaxRecords: () => {
       const configured = settingsService.getBatchMaxRecords();
@@ -113,7 +116,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     },
     getConcurrency: () => settingsService.getBatchConcurrency(),
     getDryRunDefault: () => settingsService.getBatchDryRunDefault(),
-    getPerformanceMode: () => roleGuard.resolvePerformanceMode()
+    getPerformanceMode: () => roleGuard.resolvePerformanceMode(),
+    circuitBreakerRegistry
   });
   const pluginRegistry = new PluginRegistry(profileStore, fmClient, roleGuard, logger);
   const fmWebProjectService = new FmWebProjectService(
@@ -258,6 +262,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const pluginDisposables = registerPluginCommands({
     pluginRegistry
   });
+  const circuitBreakerDisposables = registerCircuitBreakerCommands({
+    registry: circuitBreakerRegistry
+  });
   const fmWebProjectDisposables = registerFmWebProjectCommands({
     context,
     profileStore,
@@ -309,6 +316,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     ...diagnosticsDisposables,
     ...offlineDisposables,
     ...pluginDisposables,
+    ...circuitBreakerDisposables,
     ...fmWebProjectDisposables,
     diagnostics,
     jobsStatusBar,

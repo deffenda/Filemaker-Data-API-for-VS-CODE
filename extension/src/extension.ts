@@ -45,7 +45,21 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   await roleGuard.applyContexts();
 
   const profileStore = new ProfileStore(context.globalState, context.workspaceState);
-  const secretStore = new SecretStore(context.secrets);
+  const secretFallbackMode = settingsService.getSecretsFallbackMode();
+  const secretStore = new SecretStore(context.secrets, {
+    fallbackMode: secretFallbackMode,
+    workspaceState:
+      secretFallbackMode === 'workspace-state' ? context.workspaceState : undefined,
+    machineId: vscode.env.machineId,
+    logger,
+    onFallbackEngaged: (mode, reason) => {
+      const text =
+        mode === 'workspace-state'
+          ? `FileMaker: SecretStorage unavailable (${reason}); falling back to encrypted workspace state.`
+          : `FileMaker: SecretStorage unavailable (${reason}); secret persistence is disabled.`;
+      void vscode.window.showWarningMessage(text);
+    }
+  });
   const offlineModeService = new OfflineModeService(logger);
   const environmentSetStore = new EnvironmentSetStore(context.workspaceState);
   const savedQueriesStore = new SavedQueriesStore(context.globalState, context.workspaceState, {

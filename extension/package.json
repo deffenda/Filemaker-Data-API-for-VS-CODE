@@ -671,6 +671,16 @@
           "type": "boolean",
           "default": false,
           "description": "Enable anonymous usage telemetry to help improve the extension. No personal data or FileMaker credentials are collected."
+        },
+        "filemaker.secrets.fallback": {
+          "type": "string",
+          "enum": [
+            "vscode-only",
+            "workspace-state",
+            "disabled"
+          ],
+          "default": "vscode-only",
+          "description": "Behavior when VS Code SecretStorage is unavailable. 'vscode-only' (default) propagates the error. 'workspace-state' encrypts secrets to workspace state for headless / remote-agent setups. 'disabled' skips secret persistence entirely (development only)."
         }
       }
     }

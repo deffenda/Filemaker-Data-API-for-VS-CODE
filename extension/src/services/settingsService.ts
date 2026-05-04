@@ -178,6 +178,14 @@ export class SettingsService {
     return this.getConfiguration('filemaker').get<boolean>('offline.mode', false);
   }
 
+  public getOfflineStaleCacheWarnHours(): number {
+    const configured = this.getConfiguration('filemaker').get<number>('offline.staleCacheWarnHours', 24);
+    if (!Number.isFinite(configured) || configured < 0) {
+      return 24;
+    }
+    return Math.round(configured);
+  }
+
   public getSchemaHashAlgorithm(): string {
     const configured = this.getConfiguration('filemaker').get<string>('schema.hashAlgorithm', 'sha256').trim();
     return configured.length > 0 ? configured : 'sha256';

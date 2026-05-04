@@ -122,6 +122,6 @@ describe('renderCircuitBreakerStatus', () => {
     const registry = new CircuitBreakerRegistry();
     registry.register('flap', breaker, 0);
     const out = renderCircuitBreakerStatus(registry.list(300), 300);
-    expect(out).toContain('Half-open successes needed: 0 / 3');
+    expect(out).toContain('**Half-open successes needed:** 0 / 3');
   });
 });

@@ -8,6 +8,7 @@ import type { ProfileStore } from '../../services/profileStore';
 import type { SavedQueriesStore } from '../../services/savedQueriesStore';
 import type { ConnectionProfile, FindRecordsRequest, SavedQuery } from '../../types/fm';
 import { recordsToCsv } from '../../utils/exportCsv';
+import { extractLayoutFieldNames } from '../../utils/layoutFields';
 import { parseFindJson, parseSortJson } from '../../utils/jsonValidate';
 import { generateCurlSnippet, generateFetchSnippet, type SnippetRequest } from '../../utils/snippetGen';
 import { buildWebviewCsp, createNonce } from '../common/csp';
@@ -55,6 +56,7 @@ interface QueryExecutionResult {
 type IncomingMessage =
   | { type: 'ready' }
   | { type: 'loadLayouts'; profileId: string }
+  | { type: 'loadFieldNames'; profileId: string; layout: string }
   | { type: 'runQuery'; payload: RunQueryPayload }
   | { type: 'saveQuery'; payload: SaveQueryPayload }
   | { type: 'exportResultsToEditor' }
@@ -160,6 +162,9 @@ export class QueryBuilderPanel {
       case 'loadLayouts':
         await this.handleLoadLayouts(message.profileId);
         break;
+      case 'loadFieldNames':
+        await this.handleLoadFieldNames(message.profileId, message.layout);
+        break;
       case 'runQuery':
         await this.handleRunQuery(message.payload);
         break;
@@ -244,6 +249,37 @@ export class QueryBuilderPanel {
     } catch (error) {
       this.logger.error('Failed to load layouts for query builder.', { profileId, error });
       await this.postError(this.formatError(error));
+    }
+  }
+
+  private async handleLoadFieldNames(profileId: string, layout: string): Promise<void> {
+    const profile = await this.profileStore.getProfile(profileId);
+    if (!profile) {
+      await this.panel.webview.postMessage({
+        type: 'fieldNamesLoaded',
+        payload: { profileId, layout, fieldNames: [], error: 'Profile not found.' }
+      });
+      return;
+    }
+
+    try {
+      const metadata = await this.fmClient.getLayoutMetadata(profile, layout);
+      const fieldNames = extractLayoutFieldNames(metadata);
+      await this.panel.webview.postMessage({
+        type: 'fieldNamesLoaded',
+        payload: { profileId, layout, fieldNames }
+      });
+    } catch (error) {
+      this.logger.warn('Failed to load field names for query builder.', { profileId, layout, error });
+      await this.panel.webview.postMessage({
+        type: 'fieldNamesLoaded',
+        payload: {
+          profileId,
+          layout,
+          fieldNames: [],
+          error: this.formatError(error)
+        }
+      });
     }
   }
 
@@ -564,6 +600,14 @@ export class QueryBuilderPanel {
           type,
           profileId
         };
+      }
+      case 'loadFieldNames': {
+        const profileId = getStringField(value, 'profileId');
+        const layout = getStringField(value, 'layout');
+        if (!profileId || !layout) {
+          return undefined;
+        }
+        return { type, profileId, layout };
       }
       case 'runQuery': {
         const payload = this.parseRunQueryPayload(value.payload);

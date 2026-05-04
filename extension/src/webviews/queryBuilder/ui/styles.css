@@ -234,3 +234,43 @@ th {
     flex: 1;
   }
 }
+
+.field-names-panel {
+  margin: 8px 0;
+  padding: 8px 10px;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  background: rgba(15, 118, 110, 0.04);
+  font-size: 0.85em;
+}
+.field-names-header {
+  color: var(--muted);
+  font-size: 0.78em;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+.field-names-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.field-name-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--text);
+  font-family: 'SF Mono', Menlo, monospace;
+  font-size: 0.78em;
+  cursor: pointer;
+}
+.field-name-chip:hover {
+  border-color: var(--accent);
+  background: rgba(15, 118, 110, 0.08);
+}
+.field-names-error {
+  color: var(--error);
+  font-size: 0.8em;
+}

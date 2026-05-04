@@ -161,7 +161,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     onProfileDisconnected: (profileId) => {
       schemaService.invalidateProfile(profileId);
     },
-    getConnectBackoffPolicy: () => settingsService.getConnectBackoffPolicy()
+    getConnectBackoffPolicy: () => settingsService.getConnectBackoffPolicy(),
+    getConnectionWizardTestPolicy: () => settingsService.getConnectionWizardTestPolicy()
   });
 
   const savedQueryDisposables = registerSavedQueriesCommands({

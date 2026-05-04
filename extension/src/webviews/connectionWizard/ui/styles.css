@@ -239,3 +239,29 @@ h1 {
 }
 
 .loading-skeleton.hidden { display: none; }
+
+.test-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  margin: 0 8px 0 0;
+  border-radius: 4px;
+  font-size: 0.85em;
+  font-family: var(--vscode-font-family);
+  background: var(--vscode-input-background, #2d2d2d);
+  color: var(--vscode-foreground, #d4d4d4);
+  border: 1px solid var(--vscode-input-border, transparent);
+  vertical-align: middle;
+}
+.test-badge.untested { opacity: 0.7; }
+.test-badge.success {
+  background: var(--vscode-testing-iconPassed, #1f6f1f);
+  color: #ffffff;
+}
+.test-badge.failure {
+  background: var(--vscode-testing-iconFailed, #b22222);
+  color: #ffffff;
+}
+.test-badge.stale {
+  background: var(--vscode-editorWarning-foreground, #cc8400);
+  color: #1f1f1f;
+}

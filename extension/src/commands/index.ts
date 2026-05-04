@@ -23,6 +23,7 @@ import {
 import { ConnectionWizardPanel } from '../webviews/connectionWizard';
 import { QueryBuilderPanel } from '../webviews/queryBuilder';
 import { RecordViewerPanel } from '../webviews/recordViewer';
+import { retryWithBackoff, type BackoffPolicy } from '../utils/backoff';
 
 interface RegisterCoreCommandDeps {
   context: vscode.ExtensionContext;
@@ -34,6 +35,36 @@ interface RegisterCoreCommandDeps {
   roleGuard: RoleGuard;
   refreshExplorer: () => void;
   onProfileDisconnected?: (profileId: string) => void;
+  /** Resolved at call time so settings updates are picked up live. */
+  getConnectBackoffPolicy?: () => BackoffPolicy;
+  getConnectionWizardTestPolicy?: () => 'off' | 'warn' | 'block';
+}
+
+function isRetryableConnectError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const err = error as { code?: string; status?: number; message?: string };
+  if (typeof err.code === 'string') {
+    if (
+      err.code === 'ECONNRESET' ||
+      err.code === 'ECONNREFUSED' ||
+      err.code === 'ETIMEDOUT' ||
+      err.code === 'ENOTFOUND' ||
+      err.code === 'EAI_AGAIN' ||
+      err.code === 'EPIPE' ||
+      err.code === 'ENETUNREACH'
+    ) {
+      return true;
+    }
+  }
+  if (typeof err.status === 'number' && err.status >= 500 && err.status < 600) {
+    return true;
+  }
+  if (typeof err.message === 'string') {
+    if (/timeout|network|socket|reset|refused/i.test(err.message)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 export function registerCoreCommands(deps: RegisterCoreCommandDeps): vscode.Disposable[] {
@@ -55,7 +86,9 @@ export function registerCoreCommands(deps: RegisterCoreCommandDeps): vscode.Disp
         return;
       }
 
-      ConnectionWizardPanel.createOrShow(context, profileStore, secretStore, fmClient, logger);
+      ConnectionWizardPanel.createOrShow(context, profileStore, secretStore, fmClient, logger, undefined, {
+        getTestPolicy: deps.getConnectionWizardTestPolicy
+      });
     }),
 
     vscode.commands.registerCommand('filemakerDataApiTools.editConnectionProfile', async (arg: unknown) => {
@@ -71,7 +104,9 @@ export function registerCoreCommands(deps: RegisterCoreCommandDeps): vscode.Disp
         return;
       }
 
-      ConnectionWizardPanel.createOrShow(context, profileStore, secretStore, fmClient, logger, profile);
+      ConnectionWizardPanel.createOrShow(context, profileStore, secretStore, fmClient, logger, profile, {
+        getTestPolicy: deps.getConnectionWizardTestPolicy
+      });
     }),
 
     vscode.commands.registerCommand(
@@ -117,8 +152,39 @@ export function registerCoreCommands(deps: RegisterCoreCommandDeps): vscode.Disp
         return;
       }
 
+      const policy: BackoffPolicy = deps.getConnectBackoffPolicy?.() ?? {
+        maxRetries: 3,
+        initialMs: 1_000,
+        maxMs: 30_000,
+        multiplier: 2
+      };
+
+      const statusBar = vscode.window.createStatusBarItem(
+        vscode.StatusBarAlignment.Left,
+        110
+      );
       try {
-        await fmClient.createSession(profile);
+        statusBar.text = `$(sync~spin) FileMaker: Connecting to ${profile.name}…`;
+        statusBar.show();
+
+        await retryWithBackoff(
+          () => fmClient.createSession(profile),
+          policy,
+          {
+            shouldRetry: (err) => isRetryableConnectError(err),
+            onRetry: ({ attempt, delayMs, error }) => {
+              const seconds = Math.max(1, Math.round(delayMs / 1000));
+              statusBar.text = `$(sync~spin) FileMaker: Connecting to ${profile.name} — retry ${attempt + 1}/${policy.maxRetries} in ${seconds}s`;
+              logger.warn('Connect attempt failed; retrying with backoff.', {
+                profileId: profile.id,
+                attempt,
+                delayMs,
+                error
+              });
+            }
+          }
+        );
+
         await profileStore.setActiveProfileId(profile.id);
         refreshExplorer();
         vscode.window.showInformationMessage(`Connected to "${profile.name}".`);
@@ -128,6 +194,8 @@ export function registerCoreCommands(deps: RegisterCoreCommandDeps): vscode.Disp
           logger,
           logMessage: 'Connect command failed.'
         });
+      } finally {
+        statusBar.dispose();
       }
     }),
 

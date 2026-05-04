@@ -1,7 +1,7 @@
-import {
+import type {
   CircuitBreaker,
-  type CircuitBreakerDiagnostics,
-  type CircuitBreakerTransition
+  CircuitBreakerDiagnostics,
+  CircuitBreakerTransition
 } from './circuitBreaker';
 
 const MAX_TRANSITIONS_PER_BREAKER = 25;

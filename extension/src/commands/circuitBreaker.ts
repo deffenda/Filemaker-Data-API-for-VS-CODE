@@ -1,9 +1,7 @@
 import * as vscode from 'vscode';
 
-import {
-  CircuitBreakerRegistry,
-  renderCircuitBreakerStatus
-} from '../performance/circuitBreakerRegistry';
+import { renderCircuitBreakerStatus } from '../performance/circuitBreakerRegistry';
+import type { CircuitBreakerRegistry } from '../performance/circuitBreakerRegistry';
 
 export interface CircuitBreakerCommandsDeps {
   registry: CircuitBreakerRegistry;

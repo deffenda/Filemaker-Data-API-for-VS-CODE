@@ -95,4 +95,59 @@ describe('renderErrorReport (#42)', () => {
     expect(out).not.toContain('## Response headers');
     expect(out).not.toContain('## Stack trace');
   });
+
+  it('redacts Bearer tokens in the message summary field', () => {
+    const out = renderErrorReport({
+      ...baseError(),
+      message: 'Request failed with header Bearer abc123secret'
+    });
+    expect(out).not.toContain('abc123secret');
+    expect(out).toContain('Bearer ***');
+  });
+
+  it('redacts query-param secrets in endpoint summary field', () => {
+    const out = renderErrorReport({
+      ...baseError(),
+      endpoint: 'GET /layouts?token=secrettoken'
+    });
+    expect(out).not.toContain('secrettoken');
+    expect(out).toContain('token=***');
+  });
+
+  it('redacts secrets in request-chain URL cells', () => {
+    const out = renderErrorReport({
+      ...baseError(),
+      requestChain: [
+        {
+          attempt: 0,
+          method: 'GET',
+          url: 'https://fm.example.com/api?api_key=verysecretkey',
+          note: 'retried after 401'
+        }
+      ]
+    });
+    expect(out).not.toContain('verysecretkey');
+    expect(out).toContain('api_key=***');
+  });
+
+  it('redacts Bearer tokens in request-chain note cells', () => {
+    const out = renderErrorReport({
+      ...baseError(),
+      requestChain: [
+        {
+          attempt: 0,
+          method: 'GET',
+          url: 'https://fm.example.com/api',
+          note: 'auth header was Bearer leakedtoken'
+        }
+      ]
+    });
+    expect(out).not.toContain('leakedtoken');
+  });
+
+  it('accepts a deterministic generatedAt for stable output', () => {
+    const fixedDate = new Date('2026-01-01T00:00:00.000Z');
+    const out = renderErrorReport(baseError(), undefined, { generatedAt: fixedDate });
+    expect(out).toContain('_Generated at 2026-01-01T00:00:00.000Z_');
+  });
 });

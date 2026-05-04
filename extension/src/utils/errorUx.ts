@@ -29,22 +29,33 @@ export async function showErrorWithDetails(
     error: normalized
   });
 
-  const report = renderErrorReport(normalized, error);
-  lastRenderedReport = report;
-
   const selection = await vscode.window.showErrorMessage(
     normalized.message,
     DETAILS_ACTION,
     COPY_REPORT_ACTION
   );
 
-  if (selection === COPY_REPORT_ACTION) {
-    await vscode.env.clipboard.writeText(report);
-    void vscode.window.showInformationMessage('FileMaker error report copied to clipboard.');
+  if (selection !== COPY_REPORT_ACTION && selection !== DETAILS_ACTION) {
+    // Toast dismissed — skip the (potentially expensive) report rendering entirely.
     return;
   }
 
-  if (selection !== DETAILS_ACTION) {
+  // Defer rendering until an action is selected. Building the report eagerly
+  // adds extension-host overhead for every error and can throw on non-serializable
+  // detail values, suppressing the original toast.
+  let report: string;
+  try {
+    report = renderErrorReport(normalized, error);
+  } catch (renderError) {
+    options?.logger?.error('Failed to render error report.', { renderError });
+    void vscode.window.showErrorMessage('Failed to generate FileMaker error report.');
+    return;
+  }
+  lastRenderedReport = report;
+
+  if (selection === COPY_REPORT_ACTION) {
+    await vscode.env.clipboard.writeText(report);
+    void vscode.window.showInformationMessage('FileMaker error report copied to clipboard.');
     return;
   }
 
@@ -66,18 +77,31 @@ export function getLastErrorReport(): string | undefined {
   return lastRenderedReport;
 }
 
+interface RenderErrorReportOptions {
+  /** Override the generated-at timestamp. Useful for deterministic tests. */
+  generatedAt?: Date;
+}
+
 /**
- * Pure rendering of a NormalizedError + raw error into a human-readable
+ * Renders a NormalizedError + raw error into a redacted, human-readable
  * markdown report suitable for both the Details document and the
  * "Copy as Bug Report" clipboard action.
  *
+ * All free-form string fields (message, endpoint, requestId, request-chain
+ * URLs/notes) are passed through `redactString` so secrets embedded in
+ * messages or query params are masked before they reach the clipboard.
+ *
  * Exported for testing.
  */
-export function renderErrorReport(normalized: NormalizedError, raw?: unknown): string {
+export function renderErrorReport(
+  normalized: NormalizedError,
+  raw?: unknown,
+  options: RenderErrorReportOptions = {}
+): string {
   const lines: string[] = [];
   lines.push('# FileMaker Data API — Error Report');
   lines.push('');
-  lines.push(`- **Message:** ${normalized.message}`);
+  lines.push(`- **Message:** ${redactString(normalized.message)}`);
   lines.push(`- **Kind:** ${normalized.kind}`);
   if (normalized.status !== undefined) {
     lines.push(`- **HTTP status:** ${normalized.status}`);
@@ -86,10 +110,10 @@ export function renderErrorReport(normalized: NormalizedError, raw?: unknown): s
     lines.push(`- **Code:** ${normalized.code}`);
   }
   if (normalized.endpoint) {
-    lines.push(`- **Endpoint:** ${normalized.endpoint}`);
+    lines.push(`- **Endpoint:** ${redactString(normalized.endpoint)}`);
   }
   if (normalized.requestId) {
-    lines.push(`- **Request id:** ${normalized.requestId}`);
+    lines.push(`- **Request id:** ${redactString(normalized.requestId)}`);
   }
   lines.push(`- **Retryable:** ${normalized.isRetryable}`);
   if (typeof normalized.retryCount === 'number') {
@@ -143,7 +167,8 @@ export function renderErrorReport(normalized: NormalizedError, raw?: unknown): s
 
   lines.push('---');
   lines.push('');
-  lines.push(`_Generated at ${new Date().toISOString()}_`);
+  const generatedAt = options.generatedAt ?? new Date();
+  lines.push(`_Generated at ${generatedAt.toISOString()}_`);
   return lines.join('\n');
 }
 
@@ -152,15 +177,21 @@ function escapeMarkdownTableCell(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\n/g, ' ');
 }
 
+function redactAndEscapeCell(value: string | undefined): string {
+  if (!value) return '';
+  // Redact first (so the redacted form passes through escape), then escape table-breaking chars.
+  return escapeMarkdownTableCell(redactString(value));
+}
+
 function formatChainRow(entry: RequestChainEntry): string {
   const cells = [
     String(entry.attempt),
-    escapeMarkdownTableCell(entry.method ?? ''),
-    escapeMarkdownTableCell(entry.url ?? ''),
+    redactAndEscapeCell(entry.method),
+    redactAndEscapeCell(entry.url),
     entry.status !== undefined ? String(entry.status) : '',
     entry.elapsedMs !== undefined ? `${entry.elapsedMs}ms` : '',
-    escapeMarkdownTableCell(entry.at ?? ''),
-    escapeMarkdownTableCell(entry.note ?? '')
+    redactAndEscapeCell(entry.at),
+    redactAndEscapeCell(entry.note)
   ];
   return `| ${cells.join(' | ')} |`;
 }

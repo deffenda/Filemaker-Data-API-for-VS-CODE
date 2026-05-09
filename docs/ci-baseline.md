@@ -1,8 +1,8 @@
 # CI Baseline
 
 This document records what the project's CI considers a green build, why
-the previous `enforce-runtime-guardrails` validator was retired, and the
-criteria for re-introducing a custom guardrail.
+the previous custom runtime guardrail validator was retired, and the criteria
+for re-introducing a custom guardrail.
 
 ## Required status checks (branch protection)
 
@@ -32,11 +32,9 @@ and `npm run package:check` reproduce it.
 ## What was removed and why
 
 Commit `3bed46c` ("Remove tracked AI workflow state (#27)") deleted the
-old `tools/validators/enforce-runtime-guardrails.mjs` and its
-`ai-guardrails.yml` workflow. That validator coupled CI gating to a
-locally-tracked task-state convention (`state/tasks.json`,
-`state/artifacts.json`, etc.) that is no longer how the project tracks
-work.
+old custom runtime guardrail validator and its workflow. That validator
+coupled CI gating to a locally tracked task-state convention that is no
+longer how the project tracks work.
 
 Tracking now lives on the GitHub project board per the Enterprise AI
 Standards adoption (`.ai/config.json`); the validator's preconditions
